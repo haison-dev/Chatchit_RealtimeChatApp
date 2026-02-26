@@ -37,9 +37,11 @@ export interface ChatState {
     nextCursor?: string | null,
   }>;
   activeConversationId: string | null;
-  loading: boolean;
+  convoLoading: boolean;
+  messageLoading: boolean;
   reset: () => void;
 
   setActiveConversation: (id: string | null) => void;
   fetchConversations: () => void;
+  fetchMessages: (conversationId?: string) => Promise<void>;
 }
