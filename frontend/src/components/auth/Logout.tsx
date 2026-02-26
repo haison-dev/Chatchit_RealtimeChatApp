@@ -1,8 +1,9 @@
 import { Button } from '../ui/button'
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { LogOut } from 'lucide-react';
 
-const Logout = () => {
+const   Logout = () => {
     const { signOut } = useAuthStore();
     const navigate = useNavigate();
     const handleLogout = async () => {
@@ -16,8 +17,9 @@ const Logout = () => {
     }
 
     return (
-        <Button onClick={handleLogout}>
-            Logout
+        <Button variant="completeGhost" onClick={handleLogout}>
+            <LogOut className='text-destructive'/>
+            Log out
         </Button>
     )
 }
