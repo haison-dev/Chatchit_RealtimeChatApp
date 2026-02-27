@@ -17,8 +17,8 @@ friendSchema.pre('save', function (next){
     const b = this.userB.toString();
 
     if( a > b ){
-        this.userA = mongoose.Types.ObjectId(b);
-        this.userB = mongoose.Types.ObjectId(a);
+        this.userA = new mongoose.Types.ObjectId(b);
+        this.userB = new mongoose.Types.ObjectId(a);
     }
     next();
 })

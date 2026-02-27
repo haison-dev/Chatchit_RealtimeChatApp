@@ -181,7 +181,7 @@ export const getAllFriendRequests = async (req, res) => {
             FriendRequest.find({ to: userId }).populate('from', populateFields).lean(),
         ]);
 
-        res.staatus(200).json({ sent, received });
+        res.status(200).json({ sent, received });
 
     } catch (error) {
         console.error("Error retrieving friend requests:", error);

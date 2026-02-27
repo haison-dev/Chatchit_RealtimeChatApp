@@ -14,14 +14,13 @@ export interface AuthState {
     password: string,
     email: string,
     firstName: string,
-    lastName: string
+    lastName: string,
   ) => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   fetchMe: () => Promise<void>;
   refresh: () => Promise<void>;
 }
-
 
 export interface ThemeState {
   isDark: boolean;
@@ -31,11 +30,14 @@ export interface ThemeState {
 
 export interface ChatState {
   conversations: Conversation[];
-  messages: Record<string, {
-    items: Message[],
-    hasMore: boolean,
-    nextCursor?: string | null,
-  }>;
+  messages: Record<
+    string,
+    {
+      items: Message[];
+      hasMore: boolean;
+      nextCursor?: string | null;
+    }
+  >;
   activeConversationId: string | null;
   convoLoading: boolean;
   messageLoading: boolean;
@@ -44,4 +46,14 @@ export interface ChatState {
   setActiveConversation: (id: string | null) => void;
   fetchConversations: () => void;
   fetchMessages: (conversationId?: string) => Promise<void>;
+  sendDirectMessage: (
+    recipientId: string,
+    content: string,
+    imgUrl?: string,
+  ) => Promise<void>;
+  sendGroupMessage: (
+    conversationId: string,
+    content: string,
+    imgUrl?: string,
+  ) => Promise<void>;
 }

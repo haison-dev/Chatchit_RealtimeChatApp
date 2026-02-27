@@ -31,7 +31,7 @@ const MessageItem = ({
     const participant = selectedConvo.participants.find((p) => p._id.toString() === message.senderId.toString())
 
     return (
-        <div className={cn("flex gap-2 message-bounce", message.isOwn ? "justify-end" : "justify-start")}>
+        <div className={cn("flex gap-2 message-bounce mt-1", message.isOwn ? "justify-end" : "justify-start")}>
             {/* avatar */}
             {!message.isOwn && (
                 <div className="w-8">
@@ -49,12 +49,12 @@ const MessageItem = ({
             <div className={cn("max-w-xs lg:max-w-md space-y-1 flex flex-col",
                 message.isOwn ? "items-end" : "items-start"
             )}>
-                <Card className={cn("p-3", message.isOwn ? "bg-chat-bubble-sent p-0" : "bg-chat-bubble-received")}>
-                    <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                <Card className={cn("p-3", message.isOwn ? "chat-bubble-sent" : "chat-bubble-received")}>
+                    <p className="text-sm leading-relaxed wrap-break-word">{message.content}</p>
                 </Card>
 
                 {/* timestamp */}
-                {isGroupBreak && (
+                {isGroupBreak && (  
                     <span className="text-xs text-muted-foreground px-1">
                         {formatMessageTime(new Date(message.createdAt))}
                     </span>

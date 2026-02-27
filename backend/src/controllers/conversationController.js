@@ -50,11 +50,11 @@ export const createConversation = async (req, res) => {
         }
 
         await conversation.populate([
-            { path: 'participants.userId', select: 'displayName avataUrl' },
+            { path: 'participants.userId', select: 'displayName avatarUrl' },
             {
-                path: 'seenBy', select: 'displayName avataUrl'
+                path: 'seenBy', select: 'displayName avatarUrl'
             },
-            { path: 'lastNamessage.senderId', select: 'displayName avataUrl' }
+            { path: 'lastMessage.senderId', select: 'displayName avatarUrl' }
         ]);
 
         return res.status(201).json({ conversation });
@@ -74,22 +74,22 @@ export const getConversations = async (req, res) => {
             .sort({ lastMessageAt: -1, updatedAt: -1 })
             .populate({
                 path: 'participants.userId',
-                select: 'displayName avataUrl'
+                select: 'displayName avatarUrl'
             })
             .populate({
-                path: 'lastNamessage.senderId',
-                select: 'displayName avataUrl'
+                path: 'lastMessage.senderId',
+                select: 'displayName avatarUrl'
             })
             .populate({
                 path: 'seenBy',
-                select: 'displayName avataUrl'
+                select: 'displayName avatarUrl'
             })
 
         const formatted = conversations.map((conv) => {
             const participants = (conv.participants || []).map((p) => ({
                 _id: p.userId?._id,
                 displayName: p.userId?.displayName,
-                avataUrl: p.userId?.avataUrl ?? null,
+                avatarUrl: p.userId?.avatarUrl ?? null,
                 joinedAt: p.joinedAt,
             }))
 
