@@ -1,5 +1,5 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
 import { connectDB } from './libs/db.js';
 import authRoute from './routes/authRoute.js';
 import userRoute from './routes/userRoute.js';
@@ -9,10 +9,8 @@ import conversationRoute from './routes/conversationRoute.js';
 import cookieParser from 'cookie-parser';
 import { protectedRoute } from './middlewares/authMiddleware.js';
 import cors from 'cors';
+import { app, server } from './socket/index.js';
 
-dotenv.config();
-
-const app = express();
 const PORT = process.env.PORT || 5001;
 
 //middleware
@@ -32,7 +30,7 @@ app.use('/api/friends', friendRoute);
 app.use('/api/messages', messageRoute);
 app.use('/api/conversations', conversationRoute);
 connectDB().then(() => {
-    app.listen(PORT, () => {
+    server  .listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
 })
