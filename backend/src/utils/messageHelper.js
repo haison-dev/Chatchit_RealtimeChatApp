@@ -1,4 +1,6 @@
-export const updateConversationAfterCreateMessage = (conversation, message, senderId)=>{
+import { formatConversation } from "./formatConversation.js";
+
+export const updateConversationAfterCreateMessage = (conversation, message, senderId) => {
     conversation.set({
         seenBy: [],
         lastMessageAt: message.createdAt,
@@ -18,14 +20,18 @@ export const updateConversationAfterCreateMessage = (conversation, message, send
     })
 };
 
-export const emitNewMessage = (io, conversation, message) => {
+export const emitNewMessage = async (io, conversation, message) => {
+    await conversation.populate([
+        { path: "participants.userId", select: "displayName avatarUrl" },
+        { path: "seenBy", select: "displayName avatarUrl" },
+        { path: "lastMessage.senderId", select: "displayName avatarUrl" },
+    ]);
+
+    const formatted = formatConversation(conversation);
+
     io.to(conversation._id.toString()).emit("new-message", {
         message,
-        conversation: {
-            _id: conversation._id,
-            lastMessage: conversation.lastMessage,
-            lastMessageAt: conversation.lastMessageAt,
-        },
-        unreadCounts: conversation.unreadCounts,
+        conversation: formatted,
+        unreadCounts: formatted?.unreadCounts ?? {},
     });
 }

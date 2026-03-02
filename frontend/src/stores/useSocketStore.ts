@@ -53,13 +53,22 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       };
 
       if (useChatStore.getState().activeConversationId === message.conversationId) {
-        // todo: mark seen
+        useChatStore.getState().markAsSeen( );
       }
 
       useChatStore.getState().updateConversation(updatedConversation);
     });
-  },
 
+    //read message
+    socket.on("read-message", ({ conversation, lastMessage }) => {
+      const updated = {
+        ...conversation,
+        lastMessage,
+      };
+
+      useChatStore.getState().updateConversation(updated);
+    })
+  },
   disconnectSocket: () => {
     const socket = get().socket;
     if (socket) {

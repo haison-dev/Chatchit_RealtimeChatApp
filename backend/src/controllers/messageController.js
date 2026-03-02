@@ -40,7 +40,7 @@ export const sendDirectMessage = async (req, res) => {
         updateConversationAfterCreateMessage(conversation, message, senderId);
         await conversation.save();
 
-        emitNewMessage(io, conversation, message);
+        await emitNewMessage(io, conversation, message);
 
         return res.status(201).json({ message });
 
@@ -70,7 +70,7 @@ export const sendGroupMessage = async (req, res) => {
         updateConversationAfterCreateMessage(conversation, message, senderId);
         await conversation.save();
 
-        emitNewMessage(io, conversation, message);
+        await emitNewMessage(io, conversation, message);
 
         return res.status(201).json({ message });
     } catch (error) {
