@@ -67,7 +67,9 @@ export const createConversation = async (req, res) => {
       { path: "lastMessage.senderId", select: "displayName avatarUrl" },
     ]);
 
-    return res.status(201).json({ conversation });
+    const formatted = conversation.map((conv) => formatConversation(conv));
+
+    return res.status(201).json({ conversations: formatted });
   } catch (error) {
     console.error("Error creating conversation:", error);
     return res.status(500).json({ message: "Internal server error" });
