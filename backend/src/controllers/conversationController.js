@@ -67,9 +67,15 @@ export const createConversation = async (req, res) => {
       { path: "lastMessage.senderId", select: "displayName avatarUrl" },
     ]);
 
-    const formatted = conversation.map((conv) => formatConversation(conv));
+     const formatted = formatConversation(conversation);
 
-    return res.status(201).json({ conversations: formatted });
+    if (type === "group") {
+      memberIds.forEach((userId) => {
+        io.to(userId.toString()).emit("new-group", formatted);
+      });
+    }
+
+    return res.status(201).json({ conversation: formatted});
   } catch (error) {
     console.error("Error creating conversation:", error);
     return res.status(500).json({ message: "Internal server error" });
