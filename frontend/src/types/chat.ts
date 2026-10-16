@@ -14,6 +14,7 @@ export interface SeenUser {
 export interface Group {
   name: string;
   createdBy: string;
+  admins?: string[];
 }
 
 export interface LastMessage {
@@ -55,6 +56,9 @@ export interface Message {
   createdAt: string;
   isOwn?: boolean;
   status?: "sending" | "sent" | "failed";
+  editedAt?: string | null;
+  deletedAt?: string | null;
+  reactions?: Array<{ userId: string; emoji: string }>;
 }
 
 export interface TypingUser {

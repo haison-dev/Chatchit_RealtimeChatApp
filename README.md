@@ -12,11 +12,15 @@ ChatChit is a full-stack real-time messaging application with direct and group c
 - Access and rotating refresh-token authentication
 - Direct and group messaging through Socket.IO rooms
 - Friend request workflow: send, receive, accept, and decline
+- Real-time friend-request notifications and pending-request badge
 - Live presence with multiple-tab support
 - Unread counters and read receipts
 - Cursor-based message pagination
 - Optimistic delivery with sending, sent, failed, and retry states
 - Typing indicators and automatic reconnect synchronization
+- Group renaming, membership management, leaving, and administrator roles
+- Authenticated image uploads stored in MongoDB GridFS with MIME, signature, and 5 MB validation
+- Message reactions, editing, moderator/owner deletion, and conversation search
 - User search, responsive layouts, dark mode, and emoji picker
 - Conversation-level authorization for REST and Socket.IO
 
@@ -89,13 +93,14 @@ All routes except authentication require a bearer access token.
 | Authentication | `POST /api/auth/signup`, `/signin`, `/refresh`, `/signout` |
 | Users | `GET /api/users/me`, `/search?username=...` |
 | Friends | `GET /api/friends`, `/requests`; `POST /api/friends/requests` |
-| Conversations | `GET/POST /api/conversations`; `GET /:id/messages`; `PATCH /:id/seen` |
-| Messages | `POST /api/messages/direct`, `/group` |
+| Conversations | `GET/POST /api/conversations`; history/search and seen state; group name, members, admins, and leave actions |
+| Messages | Send direct/group messages; edit, delete, and react to messages |
+| Uploads | Authenticated image upload and retrieval through `/api/uploads/images` |
 
 Important socket events:
 
-- Server events: `online-users`, `new-message`, `read-message`, `new-group`, `typing-start`, `typing-stop`
-- Client events: `join-conversation`, `typing-start`, `typing-stop`
+- Server events: messages and mutations, presence, typing, friend requests, and group membership updates
+- Client events: `join-conversation`, `leave-conversation`, `typing-start`, `typing-stop`
 
 The server verifies membership before serving conversation messages, updating read state, accepting group messages, or joining a socket room.
 
@@ -129,9 +134,3 @@ frontend/
   src/stores/        Zustand state
   src/types/         Shared frontend types
 ```
-
-## Roadmap
-
-- Group administration and membership management
-- Image attachments
-- Message reactions, editing, deletion, and search

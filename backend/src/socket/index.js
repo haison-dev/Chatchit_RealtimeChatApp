@@ -55,6 +55,10 @@ io.on("connection", async (socket) => {
     }
   });
 
+  socket.on("leave-conversation", (conversationId) => {
+    socket.leave(conversationId);
+  });
+
   socket.on("typing-start", (conversationId) => {
     if (!socket.rooms.has(conversationId)) return;
     socket.to(conversationId).emit("typing-start", {

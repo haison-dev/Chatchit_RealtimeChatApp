@@ -1,5 +1,8 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
+import Friend from "../models/Friend.js";
+import User from "../models/User.js";
+import mongoose from "mongoose";
 import { io } from "../socket/index.js";
 import { formatConversation } from "../utils/formatConversation.js";
 
@@ -53,6 +56,7 @@ export const createConversation = async (req, res) => {
         group: {
           name: name.trim(),
           createdBy: userId,
+          admins: [userId],
         },
         lastMessageAt: new Date(),
       });
@@ -219,5 +223,170 @@ export const markAsSeen = async (req, res) => {
   } catch (error) {
     console.error("Error marking as seen:", error);
     return res.status(500).json({ message: "Internal server error" });  
+  }
+};
+
+const conversationPopulation = [
+  { path: "participants.userId", select: "displayName avatarUrl username" },
+  { path: "seenBy", select: "displayName avatarUrl" },
+  { path: "lastMessage.senderId", select: "displayName avatarUrl" },
+];
+
+const formatAndBroadcastGroup = async (conversation, userIds = []) => {
+  await conversation.populate(conversationPopulation);
+  const formatted = formatConversation(conversation);
+  const recipients = new Set([
+    ...conversation.participants.map((participant) => participant.userId?._id?.toString?.() ?? participant.userId.toString()),
+    ...userIds.map(String),
+  ]);
+  recipients.forEach((id) => io.to(id).emit("group-updated", formatted));
+  return formatted;
+};
+
+const friendshipPair = (first, second) => first < second ? [first, second] : [second, first];
+
+export const renameGroup = async (req, res) => {
+  try {
+    const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+    if (!name || name.length > 80) {
+      return res.status(400).json({ message: "Group name must be between 1 and 80 characters." });
+    }
+
+    req.conversation.group.name = name;
+    await req.conversation.save();
+    const conversation = await formatAndBroadcastGroup(req.conversation);
+    return res.status(200).json({ conversation });
+  } catch (error) {
+    console.error("Error renaming group:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const addGroupMembers = async (req, res) => {
+  try {
+    const memberIds = req.body?.memberIds;
+    if (!Array.isArray(memberIds) || memberIds.length === 0) {
+      return res.status(400).json({ message: "At least one member ID is required." });
+    }
+
+    const uniqueIds = [...new Set(memberIds.map(String))];
+    if (uniqueIds.length !== memberIds.length || uniqueIds.some((id) => !mongoose.isValidObjectId(id))) {
+      return res.status(400).json({ message: "Member IDs must be valid and unique." });
+    }
+
+    const existingIds = new Set(req.conversation.participants.map((participant) => participant.userId.toString()));
+    if (uniqueIds.some((id) => existingIds.has(id))) {
+      return res.status(409).json({ message: "One or more users are already group members." });
+    }
+
+    const adminId = req.user._id.toString();
+    const friendPairs = uniqueIds.map((id) => friendshipPair(adminId, id));
+    const [users, friendships] = await Promise.all([
+      User.countDocuments({ _id: { $in: uniqueIds } }),
+      Friend.countDocuments({ $or: friendPairs.map(([userA, userB]) => ({ userA, userB })) }),
+    ]);
+    if (users !== uniqueIds.length) {
+      return res.status(404).json({ message: "One or more users do not exist." });
+    }
+    if (friendships !== uniqueIds.length) {
+      return res.status(403).json({ message: "You can only add your friends to a group." });
+    }
+
+    req.conversation.participants.push(...uniqueIds.map((userId) => ({ userId })));
+    await req.conversation.save();
+    const conversation = await formatAndBroadcastGroup(req.conversation, uniqueIds);
+    return res.status(200).json({ conversation });
+  } catch (error) {
+    console.error("Error adding group members:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const removeGroupMember = async (req, res) => {
+  try {
+    const memberId = req.params.memberId;
+    if (!mongoose.isValidObjectId(memberId)) {
+      return res.status(400).json({ message: "A valid member ID is required." });
+    }
+    if (memberId === req.user._id.toString()) {
+      return res.status(400).json({ message: "Use the leave-group action to remove yourself." });
+    }
+
+    const wasMember = req.conversation.participants.some((participant) => participant.userId.toString() === memberId);
+    if (!wasMember) return res.status(404).json({ message: "Group member not found." });
+
+    req.conversation.participants = req.conversation.participants.filter((participant) => participant.userId.toString() !== memberId);
+    req.conversation.group.admins = (req.conversation.group.admins ?? []).filter((id) => id.toString() !== memberId);
+    await req.conversation.save();
+    io.in(memberId).socketsLeave(req.conversation._id.toString());
+    io.to(memberId).emit("group-removed", { conversationId: req.conversation._id.toString() });
+    const conversation = await formatAndBroadcastGroup(req.conversation);
+    return res.status(200).json({ conversation });
+  } catch (error) {
+    console.error("Error removing group member:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const updateGroupAdmin = async (req, res) => {
+  try {
+    const memberId = req.params.memberId;
+    const isAdmin = req.body?.isAdmin;
+    if (!mongoose.isValidObjectId(memberId) || typeof isAdmin !== "boolean") {
+      return res.status(400).json({ message: "A valid member ID and isAdmin value are required." });
+    }
+    if (!req.conversation.participants.some((participant) => participant.userId.toString() === memberId)) {
+      return res.status(404).json({ message: "Group member not found." });
+    }
+
+    const admins = new Set((req.conversation.group.admins ?? []).map(String));
+    if (admins.size === 0 && req.conversation.group.createdBy) {
+      admins.add(req.conversation.group.createdBy.toString());
+    }
+    if (isAdmin) admins.add(memberId);
+    else admins.delete(memberId);
+    if (admins.size === 0) {
+      return res.status(400).json({ message: "A group must have at least one administrator." });
+    }
+
+    req.conversation.group.admins = [...admins];
+    await req.conversation.save();
+    const conversation = await formatAndBroadcastGroup(req.conversation);
+    return res.status(200).json({ conversation });
+  } catch (error) {
+    console.error("Error updating group administrator:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const leaveGroup = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+    const conversationId = req.conversation._id.toString();
+    const remaining = req.conversation.participants.filter((participant) => participant.userId.toString() !== userId);
+
+    if (remaining.length === 0) {
+      await Promise.all([
+        Conversation.findByIdAndDelete(conversationId),
+        Message.deleteMany({ conversationId }),
+      ]);
+      io.in(userId).socketsLeave(conversationId);
+      io.to(userId).emit("group-removed", { conversationId });
+      return res.status(204).send();
+    }
+
+    const admins = new Set((req.conversation.group.admins ?? []).map(String));
+    admins.delete(userId);
+    if (admins.size === 0) admins.add(remaining[0].userId.toString());
+    req.conversation.participants = remaining;
+    req.conversation.group.admins = [...admins];
+    await req.conversation.save();
+    io.in(userId).socketsLeave(conversationId);
+    io.to(userId).emit("group-removed", { conversationId });
+    await formatAndBroadcastGroup(req.conversation);
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Error leaving group:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

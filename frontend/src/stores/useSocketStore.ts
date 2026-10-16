@@ -3,6 +3,8 @@ import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
 import type { SocketState } from "@/types/store";
 import { useChatStore } from "./useChatStore";
+import { useFriendStore } from "./useFriendStore";
+import { toast } from "sonner";
 
 const baseUrl = import.meta.env.VITE_SOCKET_URL;
 
@@ -34,7 +36,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       set({ isConnected: true });
 
       const chatStore = useChatStore.getState();
-      await chatStore.fetchConversations();
+      await Promise.all([
+        chatStore.fetchConversations(),
+        useFriendStore.getState().getAllFriendRequests(),
+      ]);
       if (chatStore.activeConversationId) {
         await chatStore.resyncMessages(chatStore.activeConversationId);
       }
@@ -84,6 +89,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useChatStore.getState().updateConversation(updatedConversation);
     });
 
+    socket.on("message-updated", (message) => {
+      void useChatStore.getState().addMessage({ ...message, status: "sent" });
+    });
+
     //read message
     socket.on("read-message", ({ conversation, lastMessage }) => {
       const updated = {
@@ -98,6 +107,47 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     socket.on("new-group", (conversation) =>{
       useChatStore.getState().addConvo(conversation);
       socket.emit("join-conversation", conversation._id);
+    });
+
+    socket.on("group-updated", (conversation) => {
+      const exists = useChatStore.getState().conversations.some(
+        (item) => item._id === conversation._id,
+      );
+      if (exists) {
+        useChatStore.getState().updateConversation(conversation);
+      } else {
+        useChatStore.setState((state) => ({
+          conversations: [conversation, ...state.conversations],
+        }));
+        toast.info(`Bạn đã được thêm vào nhóm ${conversation.group?.name ?? "mới"}.`);
+      }
+      socket.emit("join-conversation", conversation._id);
+    });
+
+    socket.on("group-removed", ({ conversationId }) => {
+      useChatStore.getState().removeConversation(conversationId);
+      socket.emit("leave-conversation", conversationId);
+      toast.info("Bạn không còn là thành viên của nhóm.");
+    });
+
+    socket.on("friend-request:new", (request) => {
+      useFriendStore.getState().receiveRequest(request);
+      toast.info(`${request.from?.displayName ?? "Một người dùng"} đã gửi lời mời kết bạn.`);
+    });
+
+    socket.on("friend-request:sent", () => {
+      void useFriendStore.getState().getAllFriendRequests();
+    });
+
+    socket.on("friend-request:accepted", ({ requestId, friend }) => {
+      useFriendStore.getState().resolveRequest(requestId);
+      if (friend) useFriendStore.getState().receiveFriend(friend);
+      toast.success(`${friend?.displayName ?? "Người dùng"} đã trở thành bạn bè của bạn.`);
+    });
+
+    socket.on("friend-request:declined", ({ requestId }) => {
+      useFriendStore.getState().resolveRequest(requestId);
+      toast.info("Lời mời kết bạn đã được từ chối.");
     });
 
     socket.on("typing-start", ({ conversationId, user }) => {

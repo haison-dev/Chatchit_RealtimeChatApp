@@ -2,6 +2,7 @@ import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import { emitNewMessage, updateConversationAfterCreateMessage } from "../utils/messageHelper.js";
 import {io} from "../socket/index.js";
+import mongoose from "mongoose";
 
 const isValidClientMessageId = (value) =>
     typeof value === "string" && value.trim().length >= 8 && value.trim().length <= 100;
@@ -9,16 +10,34 @@ const isValidClientMessageId = (value) =>
 const findExistingMessage = (senderId, clientMessageId) =>
     Message.findOne({ senderId, clientMessageId });
 
+const isOwnedImage = async (senderId, imgUrl) => {
+    if (!imgUrl) return true;
+    const imageId = imgUrl.split("/").pop();
+    const file = await mongoose.connection.db.collection("messageImages.files").findOne({
+        _id: new mongoose.Types.ObjectId(imageId),
+        "metadata.uploadedBy": senderId.toString(),
+    });
+    return !!file;
+};
+
 export const sendDirectMessage = async (req, res) => {
     try {
-        const { recipientId, content, conversationId, clientMessageId } = req.body;
+        const { recipientId, content, conversationId, clientMessageId, imgUrl } = req.body;
 
         const senderId = req.user._id;
 
         let conversation;
 
-        if (typeof content !== "string" || !content.trim() || content.length > 4000) {
-            return res.status(400).json({ message: "Message content cannot be empty." });
+        const normalizedContent = typeof content === "string" ? content.trim() : "";
+        const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
+        if ((!normalizedContent && !normalizedImage) || normalizedContent.length > 4000) {
+            return res.status(400).json({ message: "A message requires text or an image." });
+        }
+        if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
+            return res.status(400).json({ message: "Image URL is not valid." });
+        }
+        if (!(await isOwnedImage(senderId, normalizedImage))) {
+            return res.status(403).json({ message: "You can only send images that you uploaded." });
         }
 
         if (!isValidClientMessageId(clientMessageId)) {
@@ -59,7 +78,8 @@ export const sendDirectMessage = async (req, res) => {
             conversationId: conversation._id,
             senderId,
             clientMessageId: clientMessageId.trim(),
-            content: content.trim()
+            content: normalizedContent || null,
+            imgUrl: normalizedImage || undefined,
         }); 
 
         updateConversationAfterCreateMessage(conversation, message, senderId);
@@ -84,12 +104,20 @@ export const sendDirectMessage = async (req, res) => {
 
 export const sendGroupMessage = async (req, res) => {
     try {
-        const { conversationId, content, clientMessageId } = req.body;
+        const { conversationId, content, clientMessageId, imgUrl } = req.body;
         const senderId = req.user._id;
         const conversation = req.conversation;
 
-        if (typeof content !== "string" || !content.trim() || content.length > 4000) {
-            return res.status(400).json({ message: "Message content cannot be empty." });
+        const normalizedContent = typeof content === "string" ? content.trim() : "";
+        const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
+        if ((!normalizedContent && !normalizedImage) || normalizedContent.length > 4000) {
+            return res.status(400).json({ message: "A message requires text or an image." });
+        }
+        if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
+            return res.status(400).json({ message: "Image URL is not valid." });
+        }
+        if (!(await isOwnedImage(senderId, normalizedImage))) {
+            return res.status(403).json({ message: "You can only send images that you uploaded." });
         }
 
         if (!isValidClientMessageId(clientMessageId)) {
@@ -105,7 +133,8 @@ export const sendGroupMessage = async (req, res) => {
             conversationId,
             senderId,
             clientMessageId: clientMessageId.trim(),
-            content: content.trim()
+            content: normalizedContent || null,
+            imgUrl: normalizedImage || undefined,
         });
 
         updateConversationAfterCreateMessage(conversation, message, senderId);

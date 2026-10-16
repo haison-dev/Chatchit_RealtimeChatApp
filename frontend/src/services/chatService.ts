@@ -58,4 +58,62 @@ export const chatService = {
     const res = await api.post("/conversations", {type, name, memberIds});
     return res.data.conversation;
   },
+
+  async renameGroup(conversationId: string, name: string) {
+    const res = await api.patch(`/conversations/${conversationId}/group`, { name });
+    return res.data.conversation;
+  },
+
+  async addGroupMembers(conversationId: string, memberIds: string[]) {
+    const res = await api.post(`/conversations/${conversationId}/members`, { memberIds });
+    return res.data.conversation;
+  },
+
+  async removeGroupMember(conversationId: string, memberId: string) {
+    const res = await api.delete(`/conversations/${conversationId}/members/${memberId}`);
+    return res.data.conversation;
+  },
+
+  async updateGroupAdmin(conversationId: string, memberId: string, isAdmin: boolean) {
+    const res = await api.patch(`/conversations/${conversationId}/admins/${memberId}`, { isAdmin });
+    return res.data.conversation;
+  },
+
+  async leaveGroup(conversationId: string) {
+    await api.post(`/conversations/${conversationId}/leave`);
+  },
+
+  async uploadImage(file: File) {
+    const res = await api.post("/uploads/images", file, {
+      headers: { "Content-Type": file.type },
+    });
+    return res.data.imageUrl as string;
+  },
+
+  async getImage(imageUrl: string) {
+    const res = await api.get(imageUrl, { responseType: "blob" });
+    return res.data as Blob;
+  },
+
+  async editMessage(messageId: string, content: string) {
+    const res = await api.patch(`/messages/${messageId}`, { content });
+    return res.data.message as Message;
+  },
+
+  async deleteMessage(messageId: string) {
+    const res = await api.delete(`/messages/${messageId}`);
+    return res.data.message as Message;
+  },
+
+  async reactToMessage(messageId: string, emoji: string) {
+    const res = await api.put(`/messages/${messageId}/reaction`, { emoji });
+    return res.data.message as Message;
+  },
+
+  async searchMessages(conversationId: string, query: string) {
+    const res = await api.get(`/conversations/${conversationId}/messages/search`, {
+      params: { q: query },
+    });
+    return res.data.messages as Message[];
+  },
 };

@@ -7,6 +7,8 @@ import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
 import GroupChatAvatar from "./GroupChatAvatar";
 import { useSocketStore } from "@/stores/useSocketStore";
+import GroupSettingsDialog from "./GroupSettingsDialog";
+import MessageSearchDialog from "./MessageSearchDialog";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const { conversations, activeConversationId } = useChatStore();
@@ -78,7 +80,11 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
               {typingLabel && (
                 <p className="text-xs text-primary animate-pulse">{typingLabel}</p>
               )}
-            </div>
+          </div>
+          <div className="ml-auto flex items-center">
+            <MessageSearchDialog conversationId={chat._id} />
+            {chat.type === "group" && <GroupSettingsDialog conversation={chat} />}
+          </div>
         </div>
       </div>
     </header>

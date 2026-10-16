@@ -7,83 +7,94 @@ export const useFriendStore = create<FriendState>((set) => ({
   loading: false,
   receivedList: [],
   sentList: [],
+
   searchByUsername: async (username) => {
+    set({ loading: true });
     try {
-      set({ loading: true });
-
-      const user = await friendService.searchByUserName(username);
-
-      return user;
+      return await friendService.searchByUserName(username);
     } catch (error) {
-      console.error("Lỗi xảy ra khi tìm user bằng username", error);
+      console.error("Unable to find user by username", error);
       return null;
     } finally {
-      set({ loading: false })
+      set({ loading: false });
     }
   },
+
   addFriend: async (to, message) => {
+    set({ loading: true });
     try {
-      set({ loading: true });
-      const resultMessage = await friendService.sendFriendRequest(to, message);
-      return resultMessage;
-    } catch (error) {
-      console.error("Lỗi xảy ra khi addFriend", error);
-      return "Lỗi xảy ra khi gửi kết bạn. Hãy thử lại"
+      return await friendService.sendFriendRequest(to, message);
     } finally {
       set({ loading: false });
     }
   },
+
   getAllFriendRequests: async () => {
+    set({ loading: true });
     try {
-      set({ loading: true });
-      const result = await friendService.getAllFriendRequests();
-      if (!result) return;
-
-      const { received, sent } = result;
-      set({ receivedList: received, sentList: sent })
+      const { received, sent } = await friendService.getAllFriendRequests();
+      set({ receivedList: received, sentList: sent });
     } catch (error) {
-      console.error("Lỗi xảy ra khi getAllFriendRequets", error);
+      console.error("Unable to load friend requests", error);
     } finally {
       set({ loading: false });
     }
   },
+
   acceptRequest: async (requestId) => {
+    set({ loading: true });
     try {
-      set({ loading: true });
-      await friendService.acceptRequest(requestId);
-
+      const newFriend = await friendService.acceptRequest(requestId);
       set((state) => ({
-        receivedList: state.receivedList.filter((r) => r._id !== requestId)
+        receivedList: state.receivedList.filter((request) => request._id !== requestId),
+        friends: newFriend && !state.friends.some((friend) => friend._id === newFriend._id)
+          ? [newFriend, ...state.friends]
+          : state.friends,
       }));
-    } catch (error) {
-      console.error("Lỗi xảy ra khi acceptRequest", error);
+    } finally {
+      set({ loading: false });
     }
   },
-  declineRequest: async (requestId) => {
-    try {
-      set({loading: true});
-      await friendService.declineRequest(requestId);
 
+  declineRequest: async (requestId) => {
+    set({ loading: true });
+    try {
+      await friendService.declineRequest(requestId);
       set((state) => ({
-        receivedList: state.receivedList.filter((r) => r._id !== requestId)
-      }))
-    } catch (error) {
-        console.error("Lỗi xảy ra khi declineRequest", error);
+        receivedList: state.receivedList.filter((request) => request._id !== requestId),
+      }));
     } finally {
-      set({loading: false});
+      set({ loading: false });
     }
   },
+
   getFriends: async () => {
+    set({ loading: true });
     try {
-      set({loading: true});
       const friends = await friendService.getFriendList();
-      set({friends: friends})
+      set({ friends });
     } catch (error) {
-      console.error(error);
-      set({friends: []})
+      console.error("Unable to load friends", error);
+      set({ friends: [] });
     } finally {
-      set({loading: false})
+      set({ loading: false });
     }
-  }
- 
+  },
+
+  receiveRequest: (request) => set((state) => ({
+    receivedList: state.receivedList.some((item) => item._id === request._id)
+      ? state.receivedList
+      : [request, ...state.receivedList],
+  })),
+
+  resolveRequest: (requestId) => set((state) => ({
+    receivedList: state.receivedList.filter((item) => item._id !== requestId),
+    sentList: state.sentList.filter((item) => item._id !== requestId),
+  })),
+
+  receiveFriend: (friend) => set((state) => ({
+    friends: state.friends.some((item) => item._id === friend._id)
+      ? state.friends
+      : [friend, ...state.friends],
+  })),
 }));

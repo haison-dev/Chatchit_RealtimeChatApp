@@ -36,3 +36,19 @@ export const requireGroupMember = (req, res, next) => {
 
   return next();
 };
+
+export const requireGroupAdmin = (req, res, next) => {
+  if (req.conversation?.type !== "group") {
+    return res.status(400).json({ message: "A group conversation is required." });
+  }
+
+  const userId = req.user._id.toString();
+  const adminIds = req.conversation.group?.admins?.map(String) ?? [];
+  const isLegacyOwner = adminIds.length === 0 && req.conversation.group?.createdBy?.toString() === userId;
+
+  if (!adminIds.includes(userId) && !isLegacyOwner) {
+    return res.status(403).json({ message: "Group administrator access is required." });
+  }
+
+  return next();
+};

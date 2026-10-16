@@ -68,6 +68,15 @@ export interface ChatState {
   markAsSeen: () => Promise<void>;  
   addConvo: (convo: Conversation) => void;
   createConversation: (type: "group" | "direct", name: string, memberIds: string[]) => Promise<void>;
+  renameGroup: (conversationId: string, name: string) => Promise<void>;
+  addGroupMembers: (conversationId: string, memberIds: string[]) => Promise<void>;
+  removeGroupMember: (conversationId: string, memberId: string) => Promise<void>;
+  updateGroupAdmin: (conversationId: string, memberId: string, isAdmin: boolean) => Promise<void>;
+  leaveGroup: (conversationId: string) => Promise<void>;
+  removeConversation: (conversationId: string) => void;
+  editMessage: (messageId: string, content: string) => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<void>;
+  reactToMessage: (messageId: string, emoji: string) => Promise<void>;
 }
 
 export interface SocketState {
@@ -92,4 +101,7 @@ export interface FriendState {
   acceptRequest: (requestId: string) => Promise<void>;
   declineRequest: (requestId: string) => Promise<void>;
   getFriends: () => Promise<void>;
+  receiveRequest: (request: FriendRequest) => void;
+  resolveRequest: (requestId: string) => void;
+  receiveFriend: (friend: Friend) => void;
 }

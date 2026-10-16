@@ -227,7 +227,9 @@ export const useChatStore = create<ChatState>()(
                   lastMessageAt: normalized.createdAt,
                   lastMessage: {
                     _id: normalized._id,
-                    content: normalized.content ?? "",
+                    content: normalized.deletedAt
+                      ? "Tin nhắn đã bị xóa"
+                      : normalized.content || (normalized.imgUrl ? "📷 Hình ảnh" : ""),
                     createdAt: normalized.createdAt,
                     sender: {
                       _id: normalized.senderId,
@@ -269,7 +271,7 @@ export const useChatStore = create<ChatState>()(
         const message = state.messages[conversationId].items.find((item) => item._id === messageId);
         const conversation = state.conversations.find((item) => item._id === conversationId);
         const { user } = useAuthStore.getState();
-        if (!message?.clientMessageId || !conversation || !user || !message.content) return;
+        if (!message?.clientMessageId || !conversation || !user || (!message.content && !message.imgUrl)) return;
 
         set((current) => ({
           messages: {
@@ -294,14 +296,14 @@ export const useChatStore = create<ChatState>()(
           const saved = conversation.type === "direct"
             ? await chatService.sendDirectMessage(
                 recipient!._id,
-                message.content,
+                message.content ?? "",
                 message.clientMessageId,
                 message.imgUrl ?? undefined,
                 conversationId,
               )
             : await chatService.sendGroupMessage(
                 conversationId,
-                message.content,
+                message.content ?? "",
                 message.clientMessageId,
                 message.imgUrl ?? undefined,
               );
@@ -426,6 +428,49 @@ export const useChatStore = create<ChatState>()(
         } finally {
           set({ loading: false });
         }
+      },
+      renameGroup: async (conversationId, name) => {
+        const conversation = await chatService.renameGroup(conversationId, name);
+        get().updateConversation(conversation);
+      },
+      addGroupMembers: async (conversationId, memberIds) => {
+        const conversation = await chatService.addGroupMembers(conversationId, memberIds);
+        get().updateConversation(conversation);
+      },
+      removeGroupMember: async (conversationId, memberId) => {
+        const conversation = await chatService.removeGroupMember(conversationId, memberId);
+        get().updateConversation(conversation);
+      },
+      updateGroupAdmin: async (conversationId, memberId, isAdmin) => {
+        const conversation = await chatService.updateGroupAdmin(conversationId, memberId, isAdmin);
+        get().updateConversation(conversation);
+      },
+      leaveGroup: async (conversationId) => {
+        await chatService.leaveGroup(conversationId);
+        get().removeConversation(conversationId);
+      },
+      removeConversation: (conversationId) => set((state) => {
+        const messages = { ...state.messages };
+        delete messages[conversationId];
+        return {
+          conversations: state.conversations.filter((conversation) => conversation._id !== conversationId),
+          messages,
+          activeConversationId: state.activeConversationId === conversationId
+            ? null
+            : state.activeConversationId,
+        };
+      }),
+      editMessage: async (messageId, content) => {
+        const message = await chatService.editMessage(messageId, content);
+        await get().addMessage({ ...message, status: "sent" });
+      },
+      deleteMessage: async (messageId) => {
+        const message = await chatService.deleteMessage(messageId);
+        await get().addMessage({ ...message, status: "sent" });
+      },
+      reactToMessage: async (messageId, emoji) => {
+        const message = await chatService.reactToMessage(messageId, emoji);
+        await get().addMessage({ ...message, status: "sent" });
       },
     }),
     {

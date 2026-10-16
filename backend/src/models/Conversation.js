@@ -11,6 +11,7 @@ const participantSchema = new mongoose.Schema({
 const groupSchema = new mongoose.Schema({
     name: { type: String, trim: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 }, {
     _id: false,
 }

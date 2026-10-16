@@ -6,6 +6,7 @@ import userRoute from './routes/userRoute.js';
 import friendRoute from './routes/friendRoute.js';
 import messageRoute from './routes/messageRoute.js';
 import conversationRoute from './routes/conversationRoute.js';
+import uploadRoute from './routes/uploadRoute.js';
 import cookieParser from 'cookie-parser';
 import { protectedRoute } from './middlewares/authMiddleware.js';
 import cors from 'cors';
@@ -33,6 +34,7 @@ app.use('/api/users', userRoute);
 app.use('/api/friends', friendRoute);
 app.use('/api/messages', messageRoute);
 app.use('/api/conversations', conversationRoute);
+app.use('/api/uploads', uploadRoute);
 connectDB().then(() => {
     server  .listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);

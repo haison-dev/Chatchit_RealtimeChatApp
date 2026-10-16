@@ -21,6 +21,7 @@ import DirectMessageList from "../chat/DirectMessageList"
 import { useThemeStore } from "@/stores/useThemeStore"
 import { NavUser } from "./nav-user"
 import { useAuthStore } from "@/stores/useAuthStore"
+import FriendRequestButton from "../FriendRequest/FriendRequestButton"
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -81,13 +82,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Direct message */}
         <SidebarGroup>
-          <SidebarGroupLabel className="uppercase">
-            bạn bè
-          </SidebarGroupLabel>
-
-          <SidebarGroupAction title="Kết Bạn" className="cursor-pointer">
-            <AddFriendModal />
-          </SidebarGroupAction>
+          <div className="flex items-center justify-between px-2">
+            <SidebarGroupLabel className="px-0 uppercase">
+              bạn bè
+            </SidebarGroupLabel>
+            <div className="flex shrink-0 items-center gap-1">
+              <FriendRequestButton />
+              <AddFriendModal />
+            </div>
+          </div>
 
           <SidebarGroupContent>
             <DirectMessageList />
@@ -103,4 +106,3 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   )
 }
-  

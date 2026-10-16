@@ -3,6 +3,7 @@ import test from "node:test";
 import Conversation from "../src/models/Conversation.js";
 import {
   requireConversationMember,
+  requireGroupAdmin,
   requireGroupMember,
 } from "../src/middlewares/conversationMiddleware.js";
 
@@ -90,4 +91,59 @@ test("requireGroupMember rejects direct conversations", () => {
   requireGroupMember(req, res, () => assert.fail("next must not be called"));
 
   assert.equal(res.result.statusCode, 400);
+});
+
+test("requireGroupAdmin rejects a regular group member", () => {
+  const req = {
+    user: { _id: "507f1f77bcf86cd799439011" },
+    conversation: {
+      type: "group",
+      group: {
+        createdBy: "507f1f77bcf86cd799439012",
+        admins: ["507f1f77bcf86cd799439012"],
+      },
+    },
+  };
+  const res = createResponse();
+
+  requireGroupAdmin(req, res, () => assert.fail("next must not be called"));
+
+  assert.equal(res.result.statusCode, 403);
+});
+
+test("requireGroupAdmin accepts an assigned administrator", () => {
+  const userId = "507f1f77bcf86cd799439011";
+  const req = {
+    user: { _id: userId },
+    conversation: {
+      type: "group",
+      group: {
+        createdBy: "507f1f77bcf86cd799439012",
+        admins: [userId],
+      },
+    },
+  };
+  const res = createResponse();
+  let nextCalled = false;
+
+  requireGroupAdmin(req, res, () => { nextCalled = true; });
+
+  assert.equal(nextCalled, true);
+});
+
+test("requireGroupAdmin supports legacy groups owned by their creator", () => {
+  const userId = "507f1f77bcf86cd799439011";
+  const req = {
+    user: { _id: userId },
+    conversation: {
+      type: "group",
+      group: { createdBy: userId },
+    },
+  };
+  const res = createResponse();
+  let nextCalled = false;
+
+  requireGroupAdmin(req, res, () => { nextCalled = true; });
+
+  assert.equal(nextCalled, true);
 });

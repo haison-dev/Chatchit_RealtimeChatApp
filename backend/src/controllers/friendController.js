@@ -1,6 +1,7 @@
 import Friend from "../models/Friend.js";
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import { io } from "../socket/index.js";
 
 export const sendFriendRequest = async (req, res) => {
     try {
@@ -59,6 +60,13 @@ export const sendFriendRequest = async (req, res) => {
             message: typeof message === 'string' ? message.trim() : undefined,
         });
 
+        await request.populate([
+            { path: "from", select: "_id username displayName avatarUrl" },
+            { path: "to", select: "_id username displayName avatarUrl" },
+        ]);
+        io.to(to.toString()).emit("friend-request:new", request);
+        io.to(from.toString()).emit("friend-request:sent", request);
+
         return res
             .status(200)
             .json({ message: "Friend request sent successfully.", request });
@@ -87,7 +95,7 @@ export const acceptFriendRequest = async (req, res) => {
                 });
         }
 
-        const friend = await Friend.create({
+        await Friend.create({
             userA: request.from,
             userB: request.to,
         });
@@ -95,8 +103,21 @@ export const acceptFriendRequest = async (req, res) => {
         await FriendRequest.findByIdAndDelete(requestId);
 
         const from = await User.findById(request.from)
-            .select("_id displayName avatarUrl")
+            .select("_id username displayName avatarUrl")
             .lean();
+
+        const acceptedBy = await User.findById(request.to)
+            .select("_id username displayName avatarUrl")
+            .lean();
+
+        io.to(request.from.toString()).emit("friend-request:accepted", {
+            requestId,
+            friend: acceptedBy,
+        });
+        io.to(request.to.toString()).emit("friend-request:accepted", {
+            requestId,
+            friend: from,
+        });
 
         return res.status(200).json({
             message: "Friend request accepted.",
@@ -132,6 +153,9 @@ export const declineFriendRequest = async (req, res) => {
         }
 
         await FriendRequest.findByIdAndDelete(requestId);
+
+        io.to(request.from.toString()).emit("friend-request:declined", { requestId });
+        io.to(request.to.toString()).emit("friend-request:declined", { requestId });
 
         return res.status(204).json({ message: "Friend request declined." });
     } catch (error) {
@@ -174,7 +198,7 @@ export const getAllFriendRequests = async (req, res) => {
 
         const userId = req.user._id;
 
-        const populateFields = '_id displayName avatarUrl';
+        const populateFields = '_id username displayName avatarUrl';
 
         const [sent, received] = await Promise.all([
             FriendRequest.find({ from: userId }).populate('to', populateFields).lean(),
