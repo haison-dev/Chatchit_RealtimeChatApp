@@ -11,7 +11,7 @@ import { useSocketStore } from "@/stores/useSocketStore";
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const { conversations, activeConversationId } = useChatStore();
   const { user } = useAuthStore();
-  const {onlineUsers} = useSocketStore();
+  const { onlineUsers, typingUsers } = useSocketStore();
 
   let otherUser;  
 
@@ -31,6 +31,13 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
 
     if (!user || !otherUsers) return;
   }
+
+  const activeTypingUsers = typingUsers[chat._id] ?? [];
+  const typingLabel = activeTypingUsers.length === 0
+    ? null
+    : chat.type === "direct"
+      ? "Đang nhập..."
+      : `${activeTypingUsers.map((typingUser) => typingUser.displayName).join(", ")} đang nhập...`;
 
   return (
     <header className="sticky top-0 z-10 px-4 py-2 flex items-center bg-background">
@@ -64,9 +71,14 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
           </div>
 
           {/* name */}
-            <h2 className="font-semibold text-foreground">
-              {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
-            </h2>
+            <div>
+              <h2 className="font-semibold text-foreground">
+                {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
+              </h2>
+              {typingLabel && (
+                <p className="text-xs text-primary animate-pulse">{typingLabel}</p>
+              )}
+            </div>
         </div>
       </div>
     </header>

@@ -1,17 +1,27 @@
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation } from "@/types/chat";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { ImagePlus, Send } from "lucide-react";
 import { Input } from "../ui/input";
 import EmojiPicker from "./EmojiPicker";
 import { useChatStore } from "@/stores/useChatStore";
 import { toast } from "sonner";
+import { useSocketStore } from "@/stores/useSocketStore";
 
 const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const { user } = useAuthStore();
   const { sendDirectMessage, sendGroupMessage } = useChatStore();
+  const { startTyping, stopTyping } = useSocketStore();
   const [value, setValue] = useState("");
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimer.current) clearTimeout(typingTimer.current);
+      stopTyping(selectedConvo._id);
+    };
+  }, [selectedConvo._id, stopTyping]);
 
   if (!user) return;
 
@@ -19,6 +29,8 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
     if (!value.trim()) return;
     const currValue = value;
     setValue("");
+    stopTyping(selectedConvo._id);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
 
     try {
       if (selectedConvo.type === "direct") {
@@ -30,9 +42,23 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
       }
     } catch (error) {
       console.error(error);
-      setValue(currValue);
-      toast.error("Lỗi xảy ra khi gửi tin nhắn. Bạn hãy thử lại!")
+      toast.error("Tin nhắn chưa được gửi. Bạn có thể nhấn Thử lại.")
     }
+  };
+
+  const handleValueChange = (nextValue: string) => {
+    setValue(nextValue);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+
+    if (!nextValue.trim()) {
+      stopTyping(selectedConvo._id);
+      return;
+    }
+
+    startTyping(selectedConvo._id);
+    typingTimer.current = setTimeout(() => {
+      stopTyping(selectedConvo._id);
+    }, 1500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -56,7 +82,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
         <Input
           onKeyDown={handleKeyPress}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => handleValueChange(e.target.value)}
           placeholder="Soạn tin nhắn"
           className="pr-20 h-9 bg-white border-border/50 focus:border-primary/50 transition-smooth resize-none"
         ></Input>
@@ -68,7 +94,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
             className="size-8 hover:bg-primary/10 transition-smooth"
           >
             <div className="">
-              <EmojiPicker onChange={(emoji: string) => setValue(`${value}${emoji}`)} />
+              <EmojiPicker onChange={(emoji: string) => handleValueChange(`${value}${emoji}`)} />
             </div>
           </Button>
         </div>

@@ -46,6 +46,7 @@ export interface ConversationResponse {
 
 export interface Message {
   _id: string;
+  clientMessageId?: string;
   conversationId: string;
   senderId: string;
   content: string | null;
@@ -53,4 +54,10 @@ export interface Message {
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;
+  status?: "sending" | "sent" | "failed";
+}
+
+export interface TypingUser {
+  _id: string;
+  displayName: string;
 }

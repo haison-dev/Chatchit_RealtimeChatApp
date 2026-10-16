@@ -13,6 +13,11 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    clientMessageId: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
     content: { type: String, trim: true },
     imgUrl: { type: String },
   },
@@ -20,6 +25,10 @@ const messageSchema = new mongoose.Schema(
 );
 
 messageSchema.index({ conversationId: 1, createdAt: -1 });
+messageSchema.index(
+  { senderId: 1, clientMessageId: 1 },
+  { unique: true, partialFilterExpression: { clientMessageId: { $type: "string" } } },
+);
 
 
 const Message = mongoose.model("Message", messageSchema);

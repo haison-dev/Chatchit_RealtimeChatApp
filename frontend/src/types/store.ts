@@ -1,5 +1,5 @@
 import type { Socket } from "socket.io-client";
-import type { Conversation, Message } from "./chat";
+import type { Conversation, Message, TypingUser } from "./chat";
 import type { Friend, FriendRequest, User } from "./user";
 
 export interface AuthState {
@@ -46,7 +46,7 @@ export interface ChatState {
   reset: () => void;
 
   setActiveConversation: (id: string | null) => void;
-  fetchConversations: () => void;
+  fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId?: string) => Promise<void>;
   sendDirectMessage: (
     recipientId: string,
@@ -60,19 +60,25 @@ export interface ChatState {
   ) => Promise<void>; 
   //add message
   addMessage: (message: Message) => Promise<void>;
+  retryMessage: (messageId: string) => Promise<void>;
+  resyncMessages: (conversationId?: string) => Promise<void>;
 
   //update convo
   updateConversation: (conversation: Conversation) => void;
   markAsSeen: () => Promise<void>;  
   addConvo: (convo: Conversation) => void;
   createConversation: (type: "group" | "direct", name: string, memberIds: string[]) => Promise<void>;
-} 
+}
 
 export interface SocketState {
   socket: Socket | null;
   onlineUsers: string[];
+  typingUsers: Record<string, TypingUser[]>;
+  isConnected: boolean;
   connectSocket: () => void;
-  disconnectSocket: () => void; 
+  disconnectSocket: () => void;
+  startTyping: (conversationId: string) => void;
+  stopTyping: (conversationId: string) => void;
 }
 
 export interface FriendState {
@@ -86,4 +92,4 @@ export interface FriendState {
   acceptRequest: (requestId: string) => Promise<void>;
   declineRequest: (requestId: string) => Promise<void>;
   getFriends: () => Promise<void>;
-} 
+}

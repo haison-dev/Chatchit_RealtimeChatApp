@@ -25,19 +25,25 @@ export const chatService = {
   async sendDirectMessage(
     recipientId: string,
     content: string = "",
+    clientMessageId: string,
     imgUrl?: string,
     conversationId?: string,
   ) {
     const res = await api.post("/messages/direct", {
-        recipientId, content, imgUrl, conversationId
+        recipientId, content, clientMessageId, imgUrl, conversationId
     })
 
     return res.data.message;
   },
 
-  async sendGroupMessage(conversationId: string, content: string = "", imgUrl?: string) {
+  async sendGroupMessage(
+    conversationId: string,
+    content: string = "",
+    clientMessageId: string,
+    imgUrl?: string,
+  ) {
     const res = await api.post("/messages/group", {
-        conversationId, content, imgUrl
+        conversationId, content, clientMessageId, imgUrl
     })
 
     return res.data.message;

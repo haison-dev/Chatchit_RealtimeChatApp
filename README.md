@@ -15,6 +15,8 @@ ChatChit is a full-stack real-time messaging application with direct and group c
 - Live presence with multiple-tab support
 - Unread counters and read receipts
 - Cursor-based message pagination
+- Optimistic delivery with sending, sent, failed, and retry states
+- Typing indicators and automatic reconnect synchronization
 - User search, responsive layouts, dark mode, and emoji picker
 - Conversation-level authorization for REST and Socket.IO
 
@@ -92,8 +94,8 @@ All routes except authentication require a bearer access token.
 
 Important socket events:
 
-- Server events: `online-users`, `new-message`, `read-message`, `new-group`
-- Client event: `join-conversation`
+- Server events: `online-users`, `new-message`, `read-message`, `new-group`, `typing-start`, `typing-stop`
+- Client events: `join-conversation`, `typing-start`, `typing-stop`
 
 The server verifies membership before serving conversation messages, updating read state, accepting group messages, or joining a socket room.
 
@@ -130,8 +132,6 @@ frontend/
 
 ## Roadmap
 
-- Reliable optimistic delivery with retry states
-- Typing indicators and reconnect synchronization
 - Group administration and membership management
 - Image attachments
 - Message reactions, editing, deletion, and search

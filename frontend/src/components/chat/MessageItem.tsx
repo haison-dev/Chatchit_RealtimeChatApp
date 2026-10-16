@@ -3,6 +3,10 @@ import type { Conversation, Message, Participant } from "@/types/chat";
 import UserAvatar from "./UserAvatar";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { RefreshCcw } from "lucide-react";
+import { useChatStore } from "@/stores/useChatStore";
+import { toast } from "sonner";
 
 interface MessageItemProps {
     message: Message;
@@ -19,6 +23,7 @@ const MessageItem = ({
     selectedConvo,
     lastMessageStatus,
 }: MessageItemProps) => {
+    const { retryMessage } = useChatStore();
     const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
 
     const isShowTime = index === 0 ||
@@ -33,6 +38,14 @@ const MessageItem = ({
     const participant = selectedConvo.participants.find(
         (p: Participant) => p._id.toString() === message.senderId.toString()
     );
+
+    const handleRetry = async () => {
+        try {
+            await retryMessage(message._id);
+        } catch {
+            toast.error("Không thể gửi lại tin nhắn. Vui lòng thử lại.");
+        }
+    };
 
     return (
         <>
@@ -66,7 +79,24 @@ const MessageItem = ({
                     </Card>
 
                     {/* seen or delivered */}
-                    {message.isOwn && message._id === selectedConvo.lastMessage?._id && (
+                    {message.isOwn && message.status === "sending" && (
+                        <span className="text-xs text-muted-foreground">Đang gửi...</span>
+                    )}
+
+                    {message.isOwn && message.status === "failed" && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-destructive"
+                            onClick={handleRetry}
+                        >
+                            <RefreshCcw className="size-3" />
+                            Thử lại
+                        </Button>
+                    )}
+
+                    {message.isOwn && message.status !== "sending" && message.status !== "failed" && message._id === selectedConvo.lastMessage?._id && (
                         <Badge
                             variant="outline"
                             className={cn("text-xs px-1.5 py-0.5 h-4 border-0 ", lastMessageStatus === "seen" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}

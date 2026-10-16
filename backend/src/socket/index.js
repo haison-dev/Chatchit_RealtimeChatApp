@@ -55,7 +55,31 @@ io.on("connection", async (socket) => {
     }
   });
 
+  socket.on("typing-start", (conversationId) => {
+    if (!socket.rooms.has(conversationId)) return;
+    socket.to(conversationId).emit("typing-start", {
+      conversationId,
+      user: { _id: userId, displayName: user.displayName },
+    });
+  });
+
+  socket.on("typing-stop", (conversationId) => {
+    if (!socket.rooms.has(conversationId)) return;
+    socket.to(conversationId).emit("typing-stop", {
+      conversationId,
+      userId,
+    });
+  });
+
   socket.join(userId);
+
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((roomId) => {
+      if (roomId !== socket.id) {
+        socket.to(roomId).emit("typing-stop", { conversationId: roomId, userId });
+      }
+    });
+  });
 
   socket.on("disconnect", () => {
     const sockets = onlineUsers.get(userId);
