@@ -3,24 +3,34 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router";
 
 const ProtectedRoute = () => {
-  const { accessToken, user, loading, refresh, fetchMe } = useAuthStore();
+  const { accessToken, loading, refresh, fetchMe } = useAuthStore();
   const [starting, setStarting] = useState(true);
 
-  const init = async () => {
-    if (!accessToken) {
-      await refresh();
-    }
-
-    if (accessToken && !user) {
-      await fetchMe();
-    }
-    setStarting(false);
-  };
-
-  
   useEffect(() => {
-    init();
-  }, []);
+    let active = true;
+
+    const initializeSession = async () => {
+      try {
+        if (!useAuthStore.getState().accessToken) {
+          await refresh();
+        }
+
+        const current = useAuthStore.getState();
+        if (current.accessToken && !current.user) {
+          await fetchMe();
+        }
+      } finally {
+        if (active) {
+          setStarting(false);
+        }
+      }
+    };
+
+    void initializeSession();
+    return () => {
+      active = false;
+    };
+  }, [fetchMe, refresh]);
 
   if(starting || loading){
     return <div className="flex h-screen items-center justify-center">Đang tải trang...</div>

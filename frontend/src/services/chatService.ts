@@ -15,9 +15,9 @@ export const chatService = {
   },
 
   async fetchMessages(id: string, cursor?: string): Promise<FetchMessageProps> {
-    const res = await api.get(
-      `/conversations/${id}/messages?litmit=${pageLimit}&cursor=${cursor}`,
-    );
+    const res = await api.get(`/conversations/${id}/messages`, {
+      params: { limit: pageLimit, cursor: cursor || undefined },
+    });
 
     return { messages: res.data.messages, cursor: res.data.nextCursor };
   },
@@ -44,7 +44,7 @@ export const chatService = {
   },
 
   async markAsSeen(conversationId: string) {
-    const res = await api.patch(`/conversations/${conversationId}/seen  `);
+    const res = await api.patch(`/conversations/${conversationId}/seen`);
     return res.data;  
   },
 

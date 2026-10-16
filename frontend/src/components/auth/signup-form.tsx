@@ -33,9 +33,12 @@ export function SignupForm({
   const onSubmit = async (data: SignUpFormValues) => {
     const { firstname, lastname, username, email, password } = data;
 
-    await authStore.signUp(username, password, email, firstname, lastname);
-
-    navigate('/signin');
+    try {
+      await authStore.signUp(username, password, email, firstname, lastname);
+      navigate('/signin');
+    } catch {
+      // The store displays the API error; remain on the form so it can be corrected.
+    }
   }
 
   return (

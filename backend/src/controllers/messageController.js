@@ -10,12 +10,20 @@ export const sendDirectMessage = async (req, res) => {
 
         let conversation;
 
-        if (!content) {
+        if (typeof content !== "string" || !content.trim() || content.length > 4000) {
             return res.status(400).json({ message: "Message content cannot be empty." });
         }
 
         if (conversationId) {
-            conversation = await Conversation.findById(conversationId);
+            conversation = await Conversation.findOne({
+                _id: conversationId,
+                type: "direct",
+                "participants.userId": { $all: [senderId, recipientId] },
+            });
+
+            if (!conversation) {
+                return res.status(404).json({ message: "Direct conversation not found." });
+            }
         }
 
         if (!conversation) {
@@ -34,7 +42,7 @@ export const sendDirectMessage = async (req, res) => {
         const message = await Message.create({
             conversationId: conversation._id,
             senderId,
-            content
+            content: content.trim()
         }); 
 
         updateConversationAfterCreateMessage(conversation, message, senderId);
@@ -57,14 +65,14 @@ export const sendGroupMessage = async (req, res) => {
         const senderId = req.user._id;
         const conversation = req.conversation;
 
-        if (!content) {
+        if (typeof content !== "string" || !content.trim() || content.length > 4000) {
             return res.status(400).json({ message: "Message content cannot be empty." });
         }
 
         const message = await Message.create({
             conversationId,
             senderId,
-            content
+            content: content.trim()
         });
 
         updateConversationAfterCreateMessage(conversation, message, senderId);

@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Friend from "../models/Friend.js";
+import mongoose from "mongoose";
 
 const pair = (a, b) => {
   return a < b ? [a, b] : [b, a];
@@ -11,11 +12,15 @@ export const checkFriendship = async (req, res, next) => {
     const recipientId = req.body?.recipientId ?? null;
     const memberIds = req.body?.memberIds ?? [];
 
-    if (!recipientId && memberIds.length === 0) {
+    if (!recipientId && (!Array.isArray(memberIds) || memberIds.length === 0)) {
       return res.status(400).json({ message: "Recipient ID or memberIds are required." });
     }
 
     if (recipientId) {
+      if (!mongoose.isValidObjectId(recipientId) || recipientId === me) {
+        return res.status(400).json({ message: "A valid recipient ID is required." });
+      }
+
       const [userA, userB] = pair(me, recipientId);
 
       const isFriend = await Friend.findOne({
@@ -28,6 +33,10 @@ export const checkFriendship = async (req, res, next) => {
       }
 
       return next();
+    }
+
+    if (!Array.isArray(memberIds) || memberIds.some((id) => !mongoose.isValidObjectId(id) || id === me)) {
+      return res.status(400).json({ message: "All member IDs must be valid and cannot include yourself." });
     }
 
     const friendChecks = memberIds.map(async (memberId) => {

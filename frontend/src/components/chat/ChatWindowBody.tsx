@@ -1,7 +1,7 @@
 import { useChatStore } from "@/stores/useChatStore";
 import ChatWelcomeScreen from "./ChatWelcomeScreen";
 import MessageItem from "./MessageItem";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 
 const ChatWindowBody = () => {
@@ -12,33 +12,20 @@ const ChatWindowBody = () => {
     fetchMessages
   } = useChatStore();
 
-  const [lastMessageStatus, setLastMessageStatus] = useState<
-    "delivered" | "seen"
-  >("delivered");
-
   const messages = allMessages[activeConversationId!]?.items ?? [];
   const reversedMessages = [...messages].reverse();
   const hasMore = allMessages[activeConversationId!]?.hasMore ?? false;
   const selectedConvo = conversations.find(
     (c) => c._id === activeConversationId,
   );
+  const lastMessageStatus: "delivered" | "seen" =
+    (selectedConvo?.seenBy?.length ?? 0) > 0 ? "seen" : "delivered";
   const key = `chat-scroll-${activeConversationId}`;
 
 
   // ref
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const lastMessage = selectedConvo?.lastMessage;
-
-    if (!lastMessage) {
-      return;
-    }
-    const seenBy = selectedConvo?.seenBy ?? [];
-
-    setLastMessageStatus(seenBy.length > 0 ? "seen" : "delivered");
-  }, [selectedConvo]);
 
   //kéo xuống khi load mess
   useLayoutEffect(() => {
@@ -87,7 +74,7 @@ const ChatWindowBody = () => {
         container.scrollTop = scrollTop;
       });
     }
-  }, [messages.length])
+  }, [key, messages.length])
 
   if (!selectedConvo) {
     return <ChatWelcomeScreen />;

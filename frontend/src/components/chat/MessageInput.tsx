@@ -30,6 +30,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
       }
     } catch (error) {
       console.error(error);
+      setValue(currValue);
       toast.error("Lỗi xảy ra khi gửi tin nhắn. Bạn hãy thử lại!")
     }
   };

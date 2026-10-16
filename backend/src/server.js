@@ -14,12 +14,16 @@ import { app, server } from './socket/index.js';
 const PORT = process.env.PORT || 5001;
 
 //middleware
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
 }));
+app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
 //public routes
 app.use('/api/auth', authRoute);
 

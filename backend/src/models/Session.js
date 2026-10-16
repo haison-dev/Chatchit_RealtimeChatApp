@@ -8,6 +8,7 @@ const sessionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // The field name is kept for database compatibility; only a SHA-256 hash is stored.
     refreshToken: { type: String, required: true, unique: true },
     expiresAt: { type: Date, required: true },
   },

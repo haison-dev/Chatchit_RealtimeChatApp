@@ -6,6 +6,8 @@ const api = axios.create({
   withCredentials: true,
 });
 
+let refreshPromise: Promise<string> | null = null;
+
 // add access token to request headers if available
 api.interceptors.request.use((config) => {
   const { accessToken } = useAuthStore.getState();
@@ -30,16 +32,21 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    originalRequest._retryCount = originalRequest._retryCount || 0;
-
-    if (error.response?.status === 403 && originalRequest._retryCount < 4) {
-      originalRequest._retryCount += 1;
+    if (error.response?.status === 403 && !originalRequest._retry) {
+      originalRequest._retry = true;
       try {
-        const res = await api.post("/auth/refresh", { withCredentials: true });
-        const newAccessToken = res.data.accessToken;
+        refreshPromise ??= api
+          .post("/auth/refresh")
+          .then((res) => res.data.accessToken as string)
+          .finally(() => {
+            refreshPromise = null;
+          });
+
+        const newAccessToken = await refreshPromise;
 
         useAuthStore.getState().setAccessToken(newAccessToken);
 
+        originalRequest.headers ??= {};
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {

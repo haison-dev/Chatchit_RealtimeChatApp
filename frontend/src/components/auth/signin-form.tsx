@@ -30,8 +30,12 @@ export function SigninForm({className, ...props}: React.ComponentProps<"div">) {
   const onSubmit = async (data: SignInFormValues) => {
     const { username, password } = data;
 
-    await signIn(username, password);
-    navigate("/");
+    try {
+      await signIn(username, password);
+      navigate("/");
+    } catch {
+      // The store displays the API error; remain on the sign-in page.
+    }
 
   };
 

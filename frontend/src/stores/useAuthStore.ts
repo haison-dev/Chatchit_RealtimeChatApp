@@ -4,6 +4,7 @@ import { authService } from "@/services/authService";
 import type { AuthState } from "@/types/store";
 import { persist } from "zustand/middleware";
 import { useChatStore } from "./useChatStore";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -23,8 +24,12 @@ export const useAuthStore = create<AuthState>()(
           loading: false,
         })
         useChatStore.getState().reset();
-        localStorage.clear();
-        sessionStorage.clear();
+          localStorage.removeItem("auth-storage");
+          localStorage.removeItem("chat-storage");
+
+          Object.keys(sessionStorage)
+            .filter((key) => key.startsWith("chat-scroll-"))
+            .forEach((key) => sessionStorage.removeItem(key));
         
       },
         
@@ -41,7 +46,8 @@ export const useAuthStore = create<AuthState>()(
           );
         } catch (error) {
           console.error(error);
-          toast.error("Đăng ký thất bại. Vui lòng thử lại.");
+          toast.error(getApiErrorMessage(error, "Đăng ký thất bại. Vui lòng thử lại."));
+          throw error;
         } finally {
           set({ loading: false });
         }
@@ -60,7 +66,8 @@ export const useAuthStore = create<AuthState>()(
           toast.success("Chào mừng bạn quay lại với Chatchit");
         } catch (error) {
           console.error(error);
-          toast.error("Đăng nhập thất bại. Vui lòng thử lại.");
+          toast.error(getApiErrorMessage(error, "Đăng nhập thất bại. Vui lòng thử lại."));
+          throw error;
         } finally {
           set({ loading: false });
         }

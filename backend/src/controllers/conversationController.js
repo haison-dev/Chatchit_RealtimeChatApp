@@ -8,22 +8,29 @@ export const createConversation = async (req, res) => {
     const { type, name, memberIds } = req.body;
     const userId = req.user._id;
 
-    if (
-      !type ||
-      (type === "group" &&
-        (!name ||
-          !memberIds ||
-          !Array.isArray(memberIds) ||
-          memberIds.length === 0))
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Group name and member list is required" });
+    if (!['direct', 'group'].includes(type) || !Array.isArray(memberIds) || memberIds.length === 0) {
+      return res.status(400).json({ message: "A valid type and member list are required." });
+    }
+
+    const uniqueMemberIds = [...new Set(memberIds.map(String))].filter(
+      (id) => id !== userId.toString(),
+    );
+
+    if (uniqueMemberIds.length !== memberIds.length) {
+      return res.status(400).json({ message: "Member IDs must be unique and cannot include yourself." });
+    }
+
+    if (type === "direct" && uniqueMemberIds.length !== 1) {
+      return res.status(400).json({ message: "A direct conversation requires exactly one recipient." });
+    }
+
+    if (type === "group" && (!name?.trim() || uniqueMemberIds.length === 0)) {
+      return res.status(400).json({ message: "Group name and member list are required." });
     }
 
     let conversation;
     if (type === "direct") {
-      const participantId = memberIds[0];
+      const participantId = uniqueMemberIds[0];
       conversation = await Conversation.findOne({
         type: "direct",
         "participants.userId": { $all: [userId, participantId] },
@@ -42,9 +49,9 @@ export const createConversation = async (req, res) => {
     if (type === "group") {
       conversation = new Conversation({
         type: "group",
-        participants: [{ userId }, ...memberIds.map((id) => ({ userId: id }))],
+        participants: [{ userId }, ...uniqueMemberIds.map((id) => ({ userId: id }))],
         group: {
-          name,
+          name: name.trim(),
           createdBy: userId,
         },
         lastMessageAt: new Date(),
@@ -70,7 +77,7 @@ export const createConversation = async (req, res) => {
      const formatted = formatConversation(conversation);
 
     if (type === "group") {
-      memberIds.forEach((userId) => {
+      uniqueMemberIds.forEach((userId) => {
         io.to(userId.toString()).emit("new-group", formatted);
       });
     }
@@ -114,18 +121,27 @@ export const getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const { limit = 50, cursor } = req.query;
+    const parsedLimit = Number(limit);
+
+    if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 100) {
+      return res.status(400).json({ message: "Limit must be an integer between 1 and 100." });
+    }
 
     const query = { conversationId };
 
     if (cursor) {
-      query.createdAt = { $lt: new Date(cursor) };
+      const cursorDate = new Date(cursor);
+      if (Number.isNaN(cursorDate.getTime())) {
+        return res.status(400).json({ message: "Cursor must be a valid date." });
+      }
+      query.createdAt = { $lt: cursorDate };
     }
 
     let messages = await Message.find(query)
       .sort({ createdAt: -1 })
-      .limit(Number(limit) + 1);
+      .limit(parsedLimit + 1);
     let nextCursor = null;
-    if (messages.length > Number(limit)) {
+    if (messages.length > parsedLimit) {
       const nextMesssage = messages[messages.length - 1];
       nextCursor = nextMesssage.createdAt.toISOString();
       messages.pop();
@@ -159,11 +175,7 @@ export const markAsSeen = async (req, res) => {
     const { conversationId } = req.params;
     const userId = req.user._id.toString();
 
-    const conversation = await Conversation.findById(conversationId).lean();
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
-    }
+    const conversation = req.conversation.toObject();
 
     const last = conversation.lastMessage;
 
@@ -202,7 +214,7 @@ export const markAsSeen = async (req, res) => {
     return res.status(200).json({
       message: "Marked as seen",
       seenBy: updated?.seenBy || [],
-      myUnreadCount: updated?.unreadCounts[userId] || 0,
+      myUnreadCount: updated?.unreadCounts?.get?.(userId) || 0,
     });
   } catch (error) {
     console.error("Error marking as seen:", error);

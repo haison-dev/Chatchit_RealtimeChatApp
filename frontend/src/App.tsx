@@ -15,14 +15,14 @@ function App() {
 
   useEffect(() =>{
     setTheme(isDark);
-  }, [isDark]);
+  }, [isDark, setTheme]);
 
   useEffect(() =>{
     if(accessToken){
       connectSocket();
     }
     return () => disconnectSocket();  
-    }, [accessToken])
+    }, [accessToken, connectSocket, disconnectSocket])
 
   return (
     <>
