@@ -437,6 +437,24 @@ export const useChatStore = create<ChatState>()(
           set({ loading: false });
         }
       },
+      openDirectChat: async (userId) => {
+        const existing = get().conversations.find(
+          (c) => c.type === "direct" && c.participants.some((p) => p._id === userId),
+        );
+        let conversationId = existing?._id;
+
+        if (!conversationId) {
+          const conversation = await chatService.createConversation("direct", "", [userId]);
+          get().addConvo(conversation);
+          useSocketStore.getState().socket?.emit("join-conversation", conversation._id);
+          conversationId = conversation._id as string;
+        }
+
+        get().setActiveConversation(conversationId);
+        if (!get().messages[conversationId]) {
+          await get().fetchMessages(conversationId);
+        }
+      },
       renameGroup: async (conversationId, name) => {
         const conversation = await chatService.renameGroup(conversationId, name);
         get().updateConversation(conversation);

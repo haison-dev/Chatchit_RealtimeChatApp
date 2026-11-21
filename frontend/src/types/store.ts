@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io-client";
 import type { Conversation, Message, TypingUser } from "./chat";
-import type { Friend, FriendRequest, User } from "./user";
+import type { Friend, FriendRequest, UpdateProfileInput, User } from "./user";
 
 export interface AuthState {
   accessToken: string | null;
@@ -21,6 +21,7 @@ export interface AuthState {
   signOut: () => Promise<void>;
   fetchMe: () => Promise<void>;
   refresh: () => Promise<void>;
+  updateProfile: (input: UpdateProfileInput) => Promise<void>;
 }
 
 export interface ThemeState {
@@ -68,6 +69,8 @@ export interface ChatState {
   markAsSeen: () => Promise<void>;  
   addConvo: (convo: Conversation) => void;
   createConversation: (type: "group" | "direct", name: string, memberIds: string[]) => Promise<void>;
+  /** Opens the direct chat with a friend, creating the conversation first when none exists. */
+  openDirectChat: (userId: string) => Promise<void>;
   renameGroup: (conversationId: string, name: string) => Promise<void>;
   addGroupMembers: (conversationId: string, memberIds: string[]) => Promise<void>;
   removeGroupMember: (conversationId: string, memberId: string) => Promise<void>;
