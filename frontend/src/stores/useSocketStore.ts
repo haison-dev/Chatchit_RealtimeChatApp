@@ -145,6 +145,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       toast.success(`${friend?.displayName ?? "Người dùng"} đã trở thành bạn bè của bạn.`);
     });
 
+    // The friendship ended (either side); the payload is the id of the other person.
+    socket.on("friend-removed", ({ userId }) => {
+      useFriendStore.getState().dropFriend(userId);
+    });
+
     socket.on("friend-request:declined", ({ requestId }) => {
       useFriendStore.getState().resolveRequest(requestId);
       toast.info("Lời mời kết bạn đã được từ chối.");

@@ -92,6 +92,15 @@ export const useFriendStore = create<FriendState>((set) => ({
     sentList: state.sentList.filter((item) => item._id !== requestId),
   })),
 
+  removeFriend: async (friendId) => {
+    await friendService.removeFriend(friendId);
+    set((state) => ({ friends: state.friends.filter((friend) => friend._id !== friendId) }));
+  },
+
+  dropFriend: (friendId) => set((state) => ({
+    friends: state.friends.filter((friend) => friend._id !== friendId),
+  })),
+
   receiveFriend: (friend) => set((state) => ({
     friends: state.friends.some((item) => item._id === friend._id)
       ? state.friends

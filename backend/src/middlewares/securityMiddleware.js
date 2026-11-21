@@ -51,6 +51,12 @@ export const friendRequestLimiter = createUserLimiter({
   message: "Too many friend requests. Please try again later.",
 });
 
+export const friendActionLimiter = createUserLimiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 60,
+  message: "Too many friend actions. Please try again later.",
+});
+
 export const searchLimiter = createUserLimiter({
   windowMs: 60 * 1000,
   limit: 30,

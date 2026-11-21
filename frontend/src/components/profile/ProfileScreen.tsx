@@ -43,6 +43,7 @@ const ProfileScreen = ({ userId }: { userId: string }) => {
   const openDirectChat = useChatStore((state) => state.openDirectChat);
   const addFriend = useFriendStore((state) => state.addFriend);
   const acceptRequest = useFriendStore((state) => state.acceptRequest);
+  const removeFriend = useFriendStore((state) => state.removeFriend);
 
   // `version` is bumped after an action so the profile (relationship, contact info) is reloaded.
   useEffect(() => {
@@ -115,6 +116,7 @@ const ProfileScreen = ({ userId }: { userId: string }) => {
       actions={
         <ProfileActions
           relationship={profile.relationship}
+          displayName={profile.displayName}
           busy={busy}
           onEdit={() => setEditing(true)}
           onMessage={() => void run(async () => {
@@ -125,6 +127,11 @@ const ProfileScreen = ({ userId }: { userId: string }) => {
             toast.success(await addFriend(profile._id));
             reload();
           }, "Không thể gửi lời mời kết bạn.")}
+          onUnfriend={() => run(async () => {
+            await removeFriend(profile._id);
+            toast.success(`Đã hủy kết bạn với ${profile.displayName}.`);
+            reload();
+          }, "Không thể hủy kết bạn. Vui lòng thử lại.")}
           onAcceptRequest={() => void run(async () => {
             const requestId = profile.relationship.requestId;
             if (!requestId) return;
