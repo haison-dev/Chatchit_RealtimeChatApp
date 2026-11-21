@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import { io } from "../socket/index.js";
-import { MESSAGE_MAX_LENGTH, SEARCH_QUERY_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
+import { MESSAGE_MAX_LENGTH, SEARCH_QUERY_MAX_LENGTH, SEARCH_QUERY_MIN_LENGTH, escapeRegex, sanitizeText } from "../utils/sanitize.js";
 
 const loadAuthorizedMessage = async (messageId, userId) => {
   if (!mongoose.isValidObjectId(messageId)) return { error: 400 };
@@ -109,10 +109,10 @@ export const toggleReaction = async (req, res) => {
 export const searchMessages = async (req, res) => {
   try {
     const query = sanitizeText(req.query?.q);
-    if (query.length < 2 || query.length > SEARCH_QUERY_MAX_LENGTH) {
+    if (query.length < SEARCH_QUERY_MIN_LENGTH || query.length > SEARCH_QUERY_MAX_LENGTH) {
       return res.status(400).json({ message: "Search query must be between 2 and 100 characters." });
     }
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = escapeRegex(query);
     const messages = await Message.find({
       conversationId: req.params.conversationId,
       deletedAt: null,

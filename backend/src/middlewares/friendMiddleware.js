@@ -1,10 +1,7 @@
 import Conversation from "../models/Conversation.js";
 import Friend from "../models/Friend.js";
 import mongoose from "mongoose";
-
-const pair = (a, b) => {
-  return a < b ? [a, b] : [b, a];
-};
+import { friendPair } from "../utils/friendHelper.js";
 
 export const checkFriendship = async (req, res, next) => {
   try {
@@ -21,7 +18,7 @@ export const checkFriendship = async (req, res, next) => {
         return res.status(400).json({ message: "A valid recipient ID is required." });
       }
 
-      const [userA, userB] = pair(me, recipientId);
+      const [userA, userB] = friendPair(me, recipientId);
 
       const isFriend = await Friend.findOne({
         userA,
@@ -40,7 +37,7 @@ export const checkFriendship = async (req, res, next) => {
     }
 
     const friendChecks = memberIds.map(async (memberId) => {
-      const [userA, userB] = pair(me, memberId);
+      const [userA, userB] = friendPair(me, memberId);
       const friend = await Friend.findOne({ userA, userB });
       return friend ? null : memberId;
     });

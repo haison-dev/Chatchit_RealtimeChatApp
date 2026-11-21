@@ -4,6 +4,7 @@ import FriendRequest from "../models/FriendRequest.js";
 import mongoose from "mongoose";
 import { io } from "../socket/index.js";
 import { FRIEND_REQUEST_MESSAGE_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
+import { friendPair } from "../utils/friendHelper.js";
 
 export const sendFriendRequest = async (req, res) => {
     try {
@@ -33,12 +34,7 @@ export const sendFriendRequest = async (req, res) => {
                 .json({ message: "The user you are trying to add does not exist." });
         }
 
-        let userA = from.toString();
-        let userB = to.toString();
-
-        if (userA > userB) {
-            [userA, userB] = [userB, userA];
-        }
+        const [userA, userB] = friendPair(from, to);
 
         const [alreadyFriends, existingRequest] = await Promise.all([
             Friend.findOne({ userA, userB }),
