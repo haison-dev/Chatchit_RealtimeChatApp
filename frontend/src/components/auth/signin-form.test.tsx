@@ -30,8 +30,8 @@ describe("SigninForm", () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(screen.getByLabelText("Tên đăng nhập"), "hason1212");
-    await user.type(screen.getByLabelText("Mật khẩu"), "secret12");
+    await user.type(screen.getByLabelText(/^tên đăng nhập/i), "hason1212");
+    await user.type(screen.getByLabelText(/^mật khẩu/i), "secret12");
     await user.click(screen.getByRole("button", { name: "Đăng nhập" }));
 
     expect(await screen.findByText("Chat home")).toBeInTheDocument();
@@ -42,8 +42,8 @@ describe("SigninForm", () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(screen.getByLabelText("Tên đăng nhập"), "hason1212");
-    await user.type(screen.getByLabelText("Mật khẩu"), "wrong12");
+    await user.type(screen.getByLabelText(/^tên đăng nhập/i), "hason1212");
+    await user.type(screen.getByLabelText(/^mật khẩu/i), "wrong12");
     await user.click(screen.getByRole("button", { name: "Đăng nhập" }));
 
     expect(screen.getByRole("button", { name: "Đăng nhập" })).toBeInTheDocument();
