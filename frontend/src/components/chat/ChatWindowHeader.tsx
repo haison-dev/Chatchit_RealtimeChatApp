@@ -1,6 +1,6 @@
 import { useChatStore } from "@/stores/useChatStore";
 import type { Conversation, Participant } from "@/types/chat";
-import { SidebarTrigger } from "../ui/sidebar";
+import { SidebarTrigger, useSidebar } from "../ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Separator } from "../ui/separator";
 import UserAvatar from "./UserAvatar";
@@ -9,14 +9,15 @@ import GroupChatAvatar from "./GroupChatAvatar";
 import { useSocketStore } from "@/stores/useSocketStore";
 import GroupSettingsDialog from "./GroupSettingsDialog";
 import MessageSearchDialog from "./MessageSearchDialog";
-import { useProfileStore } from "@/stores/useProfileStore";
+import { Link } from "react-router";
+import { profilePath } from "@/lib/routes";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const activeConvo = useChatStore((state) =>
     chat ? undefined : state.conversations.find((c) => c._id === state.activeConversationId),
   );
   const user = useAuthStore((state) => state.user);
-  const openProfile = useProfileStore((state) => state.openProfile);
+  const { isMobile, state: sidebarState } = useSidebar();
   chat = chat ?? activeConvo;
   const chatId = chat?._id;
   const onlineUsers = useSocketStore((state) => state.onlineUsers);
@@ -25,9 +26,12 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   let otherUser: Participant | null | undefined;
 
   if (!chat) {
+    // Without a conversation there is no other header, so the toggle must be offered
+    // whenever the sidebar is hidden; otherwise a collapsed sidebar cannot be reopened.
+    if (!isMobile && sidebarState === "expanded") return null;
     return (
-      <header className="md:hidden sticky top-0 z-10 flex items-center gap-2 px-4 py-2 w-full">
-        <SidebarTrigger className="-ml-1 text-foreground" />
+      <header className="sticky top-0 z-10 flex w-full items-center gap-2 px-4 py-2">
+        <SidebarTrigger className="-ml-1 text-foreground" aria-label="Mở danh sách trò chuyện" />
       </header>
     );
   }
@@ -57,10 +61,9 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
             {
               chat.type === "direct" ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => otherUser && openProfile(otherUser._id)}
-                    className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  <Link
+                    to={otherUser ? profilePath(otherUser._id) : "#"}
+                    className="block rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={`Xem hồ sơ ${otherUser?.displayName ?? ""}`}
                   >
                     <UserAvatar
@@ -68,7 +71,7 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                       name={otherUser?.displayName || "Chatchit"}
                       avatarUrl={otherUser?.avatarUrl || undefined}
                     />
-                  </button>
+                  </Link>
                   <StatusBadge status={
                     onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"
                     }

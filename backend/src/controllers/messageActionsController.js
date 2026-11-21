@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import { io } from "../socket/index.js";
+import { withClearedAtFilter } from "../utils/conversationHelper.js";
 import { MESSAGE_MAX_LENGTH, SEARCH_QUERY_MAX_LENGTH, SEARCH_QUERY_MIN_LENGTH, escapeRegex, sanitizeText } from "../utils/sanitize.js";
 
 const loadAuthorizedMessage = async (messageId, userId) => {
@@ -113,11 +114,11 @@ export const searchMessages = async (req, res) => {
       return res.status(400).json({ message: "Search query must be between 2 and 100 characters." });
     }
     const escaped = escapeRegex(query);
-    const messages = await Message.find({
+    const messages = await Message.find(withClearedAtFilter({
       conversationId: req.params.conversationId,
       deletedAt: null,
       content: { $regex: escaped, $options: "i" },
-    }).sort({ createdAt: -1 }).limit(50).lean();
+    }, req.conversation, req.user._id)).sort({ createdAt: -1 }).limit(50).lean();
     return res.status(200).json({ messages });
   } catch (error) {
     console.error("Error searching messages:", error);

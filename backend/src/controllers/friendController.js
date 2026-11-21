@@ -171,6 +171,33 @@ export const declineFriendRequest = async (req, res) => {
     }
 };
 
+// DELETE /friends/:friendId: remove the friendship for both people.
+export const removeFriend = async (req, res) => {
+    try {
+        const { friendId } = req.params;
+        const userId = req.user._id.toString();
+
+        if (!mongoose.isValidObjectId(friendId) || friendId === userId) {
+            return res.status(400).json({ message: "A valid friend ID is required." });
+        }
+
+        const [userA, userB] = friendPair(userId, friendId);
+        const removed = await Friend.findOneAndDelete({ userA, userB });
+        if (!removed) {
+            return res.status(404).json({ message: "You are not friends with this user." });
+        }
+
+        // Each side learns the id of the other person so both lists update.
+        io.to(userId).emit("friend-removed", { userId: friendId });
+        io.to(friendId).emit("friend-removed", { userId });
+
+        return res.status(204).send();
+    } catch (error) {
+        console.error("Error removing friend:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 export const getAllFriends = async (req, res) => {
     try {
         const userId = req.user._id;

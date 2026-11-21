@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProfileActions from "./ProfileActions";
 import MutualFriendsPreview from "./MutualFriendsPreview";
@@ -11,8 +11,9 @@ const renderActions = (status: RelationshipStatus, busy = false) => {
     onAddFriend: vi.fn(),
     onAcceptRequest: vi.fn(),
     onEdit: vi.fn(),
+    onUnfriend: vi.fn(),
   };
-  render(<ProfileActions relationship={{ status, requestId: "r1" }} busy={busy} {...handlers} />);
+  render(<ProfileActions relationship={{ status, requestId: "r1" }} displayName="Bình" busy={busy} {...handlers} />);
   return handlers;
 };
 
@@ -22,11 +23,38 @@ describe("ProfileActions", () => {
 
     const message = screen.getByRole("button", { name: /nhắn tin/i });
     expect(message).toBeEnabled();
-    expect(screen.getByRole("button", { name: /bạn bè/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /bạn bè/i })).toBeEnabled();
     expect(screen.queryByRole("button", { name: /thêm bạn/i })).not.toBeInTheDocument();
 
     await userEvent.click(message);
     expect(handlers.onMessage).toHaveBeenCalledOnce();
+  });
+
+  it("unfriends only after the user confirms in the dropdown", async () => {
+    const user = userEvent.setup();
+    const handlers = renderActions("friend");
+
+    await user.click(screen.getByRole("button", { name: /bạn bè/i }));
+    await user.click(await screen.findByRole("menuitem", { name: /hủy kết bạn/i }));
+
+    const dialog = await screen.findByRole("dialog", { name: /hủy kết bạn?/i });
+    expect(within(dialog).getByText("Bình")).toBeInTheDocument();
+    expect(handlers.onUnfriend).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("button", { name: "Hủy kết bạn" }));
+    expect(handlers.onUnfriend).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the friendship when the confirmation is cancelled", async () => {
+    const user = userEvent.setup();
+    const handlers = renderActions("friend");
+
+    await user.click(screen.getByRole("button", { name: /bạn bè/i }));
+    await user.click(await screen.findByRole("menuitem", { name: /hủy kết bạn/i }));
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Hủy" }));
+
+    expect(handlers.onUnfriend).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("lets viewers add a stranger but not message them", async () => {

@@ -76,6 +76,8 @@ export interface ChatState {
   removeGroupMember: (conversationId: string, memberId: string) => Promise<void>;
   updateGroupAdmin: (conversationId: string, memberId: string, isAdmin: boolean) => Promise<void>;
   leaveGroup: (conversationId: string) => Promise<void>;
+  /** Deletes a direct conversation for the current user only. */
+  deleteConversation: (conversationId: string) => Promise<void>;
   removeConversation: (conversationId: string) => void;
   editMessage: (messageId: string, content: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
@@ -107,4 +109,8 @@ export interface FriendState {
   receiveRequest: (request: FriendRequest) => void;
   resolveRequest: (requestId: string) => void;
   receiveFriend: (friend: Friend) => void;
+  /** Unfriends on the server, then removes the friend from the list. */
+  removeFriend: (friendId: string) => Promise<void>;
+  /** Removes a friend from the list only (the friendship was already ended). */
+  dropFriend: (friendId: string) => void;
 }

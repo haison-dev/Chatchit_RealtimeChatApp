@@ -41,6 +41,36 @@ export const sanitizeAvatarUrl = (value) => {
 /** Escapes user input so it can be placed inside a RegExp literally. */
 export const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Every base letter and the Vietnamese letters that share it, so "son" finds "Sơn".
+const ACCENT_GROUPS = {
+  a: "aàáảãạăằắẳẵặâầấẩẫậ",
+  e: "eèéẻẽẹêềếểễệ",
+  i: "iìíỉĩị",
+  o: "oòóỏõọôồốổỗộơờớởỡợ",
+  u: "uùúủũụưừứửữự",
+  y: "yỳýỷỹỵ",
+  d: "dđ",
+};
+
+/**
+ * Builds a RegExp source that matches `query` ignoring case and Vietnamese diacritics,
+ * with every other character matched literally. Use with `$options: "i"`.
+ */
+export const buildNameSearchPattern = (query) => {
+  const base = query
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .toLowerCase();
+
+  return [...base]
+    .map((char) => {
+      const group = ACCENT_GROUPS[char];
+      return group ? `[${group}${group.toUpperCase()}]` : escapeRegex(char);
+    })
+    .join("");
+};
+
 /**
  * Returns a cleaned string, or "" when the value is not a string.
  * @param {unknown} value

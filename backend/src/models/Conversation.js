@@ -3,6 +3,10 @@ import mongoose from "mongoose";
 const participantSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     joinedAt: { type: Date, default: Date.now },
+    // "Delete conversation" only affects the user who did it: the conversation is hidden
+    // from their list until a new message arrives, and messages up to `clearedAt` stay hidden.
+    hidden: { type: Boolean, default: false },
+    clearedAt: { type: Date },
 }, {
     _id: false,
 }

@@ -7,6 +7,7 @@ import { io } from "../socket/index.js";
 import { formatConversation } from "../utils/formatConversation.js";
 import { GROUP_NAME_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
 import { friendPair } from "../utils/friendHelper.js";
+import { withClearedAtFilter } from "../utils/conversationHelper.js";
 
 export const createConversation = async (req, res) => {
   try {
@@ -104,7 +105,8 @@ export const getConversations = async (req, res) => {
   try {
     const userId = req.user._id;
     const conversations = await Conversation.find({
-      "participants.userId": userId,
+      // Conversations the user deleted stay hidden until a new message arrives.
+      participants: { $elemMatch: { userId, hidden: { $ne: true } } },
     })
       .sort({ lastMessageAt: -1, updatedAt: -1 })
       .populate({
@@ -151,7 +153,7 @@ export const getMessages = async (req, res) => {
       query.createdAt = { $lt: cursorDate };
     }
 
-    let messages = await Message.find(query)
+    let messages = await Message.find(withClearedAtFilter(query, req.conversation, req.user._id))
       .sort({ createdAt: -1 })
       .limit(parsedLimit + 1)
       .lean();
@@ -167,6 +169,32 @@ export const getMessages = async (req, res) => {
     return res.status(200).json({ messages, nextCursor });
   } catch (error) {
     console.error("Error getting messages:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// DELETE /conversations/:conversationId: delete a direct conversation for the current user only.
+export const deleteConversation = async (req, res) => {
+  try {
+    if (req.conversation.type !== "direct") {
+      return res.status(400).json({ message: "Use the leave-group action for group conversations." });
+    }
+
+    const userId = req.user._id;
+    await Conversation.updateOne(
+      { _id: req.conversation._id, "participants.userId": userId },
+      {
+        $set: {
+          "participants.$.hidden": true,
+          "participants.$.clearedAt": new Date(),
+          [`unreadCounts.${userId}`]: 0,
+        },
+      },
+    );
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting conversation:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

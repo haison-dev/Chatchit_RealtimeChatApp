@@ -26,6 +26,10 @@ export const friendService = {
     await api.post(`/friends/requests/${requestId}/decline`);
   },
 
+  async removeFriend(friendId: string) {
+    await api.delete(`/friends/${friendId}`);
+  },
+
   async getFriendList() {
     const res = await api.get("/friends");
     return res.data.friends;

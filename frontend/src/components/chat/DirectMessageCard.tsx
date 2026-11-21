@@ -1,8 +1,15 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/apiError";
+import ConfirmDialog from "../ConfirmDialog";
+import { DropdownMenuItem } from "../ui/dropdown-menu";
 import type { Conversation } from "@/types/chat";
 import ChatCard from "./ChatCard";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
+import { useNavigate } from "react-router";
+import { CHAT_PATH } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
@@ -14,24 +21,38 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const isActive = useChatStore((state) => state.activeConversationId === convo._id);
   const setActiveConversation = useChatStore((state) => state.setActiveConversation);
   const fetchMessages = useChatStore((state) => state.fetchMessages);
+  const navigate = useNavigate();
+  const deleteConversation = useChatStore((state) => state.deleteConversation);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const otherUser = userId ? convo.participants.find((p) => p._id !== userId) : undefined;
   // Subscribe to this contact's presence only, not the whole online list.
   const isOnline = useSocketStore((state) => !!otherUser && state.onlineUsers.includes(otherUser._id));
 
   const handleSelectConversation = useCallback(async (id: string) => {
     setActiveConversation(id);
+    navigate(CHAT_PATH);
     if (!useChatStore.getState().messages[id]) {
       await fetchMessages(id);
     }
-  }, [fetchMessages, setActiveConversation]);
+  }, [fetchMessages, navigate, setActiveConversation]);
 
   if (!userId || !otherUser) return null;
+
+  const removeConversation = async () => {
+    try {
+      await deleteConversation(convo._id);
+      toast.success("Đã xóa hội thoại.");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Không thể xóa hội thoại. Vui lòng thử lại."));
+    }
+  };
 
   const unreadCount = convo.unreadCounts[userId] ?? 0;
   const lastMessage = convo.lastMessage?.content ?? "";
   const isOwnLast = convo.lastMessage?.sender?._id === userId;
 
   return (
+    <>
     <ChatCard
       convoId={convo._id}
       name={otherUser.displayName ?? ""}
@@ -43,6 +64,11 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
       isActive={isActive}
       onSelect={handleSelectConversation}
       unreadCount={unreadCount}
+      menu={
+        <DropdownMenuItem variant="destructive" onSelect={() => setConfirmOpen(true)}>
+          <Trash2 /> Xóa hội thoại
+        </DropdownMenuItem>
+      }
       leftSection={
         <>
           <UserAvatar
@@ -67,6 +93,21 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
         </p>
       }
     />
+    <ConfirmDialog
+      open={confirmOpen}
+      onOpenChange={setConfirmOpen}
+      title="Xóa hội thoại?"
+      description={
+        <>
+          Cuộc trò chuyện với <strong>{otherUser.displayName}</strong> sẽ biến mất khỏi danh sách của bạn và
+          lịch sử tin nhắn hiện tại sẽ bị xóa ở phía bạn. Người kia không bị ảnh hưởng, và hội thoại sẽ hiện lại
+          nếu họ nhắn tin cho bạn.
+        </>
+      }
+      confirmLabel="Xóa hội thoại"
+      onConfirm={removeConversation}
+    />
+    </>
   );
 };
 

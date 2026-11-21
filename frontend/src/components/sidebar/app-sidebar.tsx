@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Moon, Sun } from "lucide-react"
 import { Switch } from "../ui/switch"
@@ -21,13 +22,19 @@ import DirectMessageList from "../chat/DirectMessageList"
 import { useThemeStore } from "@/stores/useThemeStore"
 import { NavUser } from "./nav-user"
 import { useAuthStore } from "@/stores/useAuthStore"
+import { useState } from "react"
 import FriendRequestButton from "../FriendRequest/FriendRequestButton"
-import UserSearchDialog from "../profile/UserSearchDialog"
+import UserSearchBox from "../profile/UserSearchBox"
+import UserSearchResults from "../profile/UserSearchResults"
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const {isDark, toggleTheme} = useThemeStore();
   const {user} = useAuthStore();
+  const { setOpenMobile } = useSidebar();
+  const [query, setQuery] = useState("");
+  // Typing anything replaces the lists with the search results; clearing brings them back.
+  const isSearching = query.trim().length > 0;
 
 
   return (
@@ -57,15 +64,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
+      {/* Search: always visible so people can be found from any screen */}
+      <div className="px-3 pt-2">
+        <UserSearchBox value={query} onChange={setQuery} />
+      </div>
+
       {/* Body */}
       <SidebarContent className="beautifull-scrollbar">
+        {isSearching ? (
+          <UserSearchResults
+            query={query}
+            onNavigate={() => { setQuery(""); setOpenMobile(false); }}
+          />
+        ) : (
+          <>
         {/* New chat */}
         <SidebarGroup>
           <SidebarGroupContent>
-            <div className="space-y-2">
-              <CreateNewChat />
-              <UserSearchDialog />
-            </div>
+            <CreateNewChat />
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -100,6 +116,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <DirectMessageList />
           </SidebarGroupContent>
         </SidebarGroup>
+          </>
+        )}
 
       </SidebarContent>
 
