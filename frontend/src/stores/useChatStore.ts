@@ -471,6 +471,10 @@ export const useChatStore = create<ChatState>()(
         const conversation = await chatService.updateGroupAdmin(conversationId, memberId, isAdmin);
         get().updateConversation(conversation);
       },
+      deleteConversation: async (conversationId) => {
+        await chatService.deleteConversation(conversationId);
+        get().removeConversation(conversationId);
+      },
       leaveGroup: async (conversationId) => {
         await chatService.leaveGroup(conversationId);
         get().removeConversation(conversationId);

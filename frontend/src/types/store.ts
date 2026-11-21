@@ -76,6 +76,8 @@ export interface ChatState {
   removeGroupMember: (conversationId: string, memberId: string) => Promise<void>;
   updateGroupAdmin: (conversationId: string, memberId: string, isAdmin: boolean) => Promise<void>;
   leaveGroup: (conversationId: string) => Promise<void>;
+  /** Deletes a direct conversation for the current user only. */
+  deleteConversation: (conversationId: string) => Promise<void>;
   removeConversation: (conversationId: string) => void;
   editMessage: (messageId: string, content: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;

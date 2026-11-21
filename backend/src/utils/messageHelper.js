@@ -1,4 +1,5 @@
 import { formatConversation } from "./formatConversation.js";
+import { unhideConversation } from "./conversationHelper.js";
 
 export const updateConversationAfterCreateMessage = (conversation, message, senderId) => {
     conversation.set({
@@ -11,6 +12,8 @@ export const updateConversationAfterCreateMessage = (conversation, message, send
             createdAt: message.createdAt
         }
     });
+
+    unhideConversation(conversation);
 
     conversation.participants.forEach((p) =>{
         const memberId = p.userId.toString();
