@@ -15,7 +15,7 @@ export const authMe = async (req, res) => {
 export const searchUserByUsername = async (req, res) =>{
     try {
         const { username } = req.query;
-        if(!username || username.trim() === '') {
+        if (typeof username !== 'string' || username.trim() === '' || username.length > 30) {
             return res.status(400).json({ message: "Username query parameter is required." });
         }
 

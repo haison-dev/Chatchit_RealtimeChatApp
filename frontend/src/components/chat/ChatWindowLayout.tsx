@@ -8,38 +8,33 @@ import MessageInput from "./MessageInput";
 import { useEffect } from "react";
 
 const ChatWindowLayout = () => {
-  const {
-    activeConversationId,
-    conversations,
-    messageLoading: loading,
-    // messages,
-    markAsSeen
-  } = useChatStore();
+  const selectedConvo = useChatStore((state) =>
+    state.conversations.find((c) => c._id === state.activeConversationId) ?? null,
+  );
+  // Only the very first page shows the skeleton. Loading older pages must not
+  // unmount the window, or the scroll position and the unsent draft are lost.
+  const isInitialLoad = useChatStore((state) =>
+    state.messageLoading && !!state.activeConversationId && !state.messages[state.activeConversationId],
+  );
+  const markAsSeen = useChatStore((state) => state.markAsSeen);
+  const lastMessageId = selectedConvo?.lastMessage?._id;
+  const selectedId = selectedConvo?._id;
 
-  const selectedConvo =
-    conversations.find((c) => c._id === activeConversationId) ?? null;
-
-  useEffect(() =>{
-    if(!selectedConvo){
+  useEffect(() => {
+    if (!selectedId) {
       return;
     }
 
-    const markSeen = async () => {
-      try {
-        await markAsSeen();
-      } catch (error) {
-        console.error("Lỗi khi markSeen", error);
-      }
-    }
-
-    markSeen();
-  }, [markAsSeen, selectedConvo])
+    markAsSeen().catch((error) => {
+      console.error("Lỗi khi markSeen", error);
+    });
+  }, [markAsSeen, selectedId, lastMessageId]);
 
   if (!selectedConvo) {
     return <ChatWelcomeScreen />;
   }
 
-  if (loading) {
+  if (isInitialLoad) {
     return <ChatWindowSkeleton />;
   }
 

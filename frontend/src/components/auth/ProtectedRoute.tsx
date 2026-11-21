@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router";
+import FullPageLoader from "../FullPageLoader";
 
 const ProtectedRoute = () => {
   const { accessToken, loading, refresh, fetchMe } = useAuthStore();
@@ -33,7 +34,7 @@ const ProtectedRoute = () => {
   }, [fetchMe, refresh]);
 
   if(starting || loading){
-    return <div className="flex h-screen items-center justify-center">Đang tải trang...</div>
+    return <FullPageLoader label="Đang khôi phục phiên đăng nhập..." />
   }
 
   if (!accessToken) {

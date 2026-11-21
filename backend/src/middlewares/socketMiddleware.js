@@ -3,12 +3,12 @@ import User from "../models/User.js";
 
 export const socketAuthMiddleware = async (socket, next) => {
   try {
-    const token = socket.handshake.auth.token;
-    if (!token) {
+    const token = socket.handshake.auth?.token;
+    if (typeof token !== "string" || !token) {
       return next(new Error("Authentication error: Token not provided"));
     }
 
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, { algorithms: ["HS256"] });
     if (!decoded) {
       return next(new Error("Authentication error: Invalid token"));
     }
@@ -23,7 +23,9 @@ export const socketAuthMiddleware = async (socket, next) => {
 
     next();
   } catch (error) {
-    console.error("Socket authentication error:", error);
+    if (error?.name !== "TokenExpiredError") {
+      console.error("Socket authentication error:", error);
+    }
     next(new Error("Unauthorized"));
   }
 };

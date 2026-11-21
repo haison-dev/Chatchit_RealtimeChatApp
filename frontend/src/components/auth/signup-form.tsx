@@ -8,13 +8,29 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router";
+import { PERSON_NAME_MAX_LENGTH, sanitizeText } from "@/lib/sanitize";
+
+// Mirrors the server rules in backend/src/controllers/authController.js so users
+// get instant feedback; the server still validates everything.
+const personName = (requiredMessage: string) =>
+  z.string()
+    .transform((value) => sanitizeText(value))
+    .pipe(z.string()
+      .min(1, requiredMessage)
+      .max(PERSON_NAME_MAX_LENGTH, `Tối đa ${PERSON_NAME_MAX_LENGTH} ký tự`)
+      .regex(/^[\p{L}\p{M}' .-]+$/u, "Chỉ được dùng chữ cái, khoảng trắng, dấu nháy, chấm hoặc gạch nối"));
 
 const signUpSchema = z.object({
-  firstname: z.string().min(1, "Vui lòng nhập tên"),
-  lastname: z.string().min(1, "Vui lòng nhập họ"),
-  username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
-  email: z.email("Địa chỉ email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  firstname: personName("Vui lòng nhập tên"),
+  lastname: personName("Vui lòng nhập họ"),
+  username: z.string().trim()
+    .min(3, "Tên đăng nhập phải có ít nhất 3 ký tự")
+    .max(30, "Tên đăng nhập tối đa 30 ký tự")
+    .regex(/^[a-zA-Z0-9_.-]+$/, "Chỉ được dùng chữ, số, dấu chấm, gạch dưới hoặc gạch nối"),
+  email: z.string().trim().max(254, "Email quá dài").pipe(z.email("Địa chỉ email không hợp lệ")),
+  password: z.string()
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
+    .max(72, "Mật khẩu tối đa 72 ký tự"),
 });
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;

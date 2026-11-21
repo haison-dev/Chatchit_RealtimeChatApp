@@ -5,6 +5,7 @@ import type { AuthState } from "@/types/store";
 import { persist } from "zustand/middleware";
 import { useChatStore } from "./useChatStore";
 import { getApiErrorMessage } from "@/lib/apiError";
+import { clearImageCache } from "@/lib/imageCache";
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
           loading: false,
         })
         useChatStore.getState().reset();
+        clearImageCache();
           localStorage.removeItem("auth-storage");
           localStorage.removeItem("chat-storage");
 

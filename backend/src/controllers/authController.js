@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
+import { PERSON_NAME_MAX_LENGTH, sanitizeText } from '../utils/sanitize.js';
 
 const ACCESS_TOKEN_TTL = '30m';
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -32,6 +33,8 @@ export const signUp = async (req, res) => {
 
         const normalizedUsername = username.trim().toLowerCase();
         const normalizedEmail = email.trim().toLowerCase();
+        const normalizedFirstName = sanitizeText(firstName);
+        const normalizedLastName = sanitizeText(lastName);
 
         if (!USERNAME_PATTERN.test(normalizedUsername)) {
             return res.status(400).json({ message: "Username must be 3-30 characters and contain only letters, numbers, dots, underscores, or hyphens." });
@@ -45,8 +48,12 @@ export const signUp = async (req, res) => {
             return res.status(400).json({ message: "Password must be between 6 and 72 characters." });
         }
 
-        if (firstName.trim().length > 50 || lastName.trim().length > 50) {
-            return res.status(400).json({ message: "First and last names must not exceed 50 characters." });
+        if (!normalizedFirstName || !normalizedLastName) {
+            return res.status(400).json({ message: "First and last names are required." });
+        }
+
+        if (normalizedFirstName.length > PERSON_NAME_MAX_LENGTH || normalizedLastName.length > PERSON_NAME_MAX_LENGTH) {
+            return res.status(400).json({ message: `First and last names must not exceed ${PERSON_NAME_MAX_LENGTH} characters.` });
         }
 
         //check if user exists
@@ -71,7 +78,7 @@ export const signUp = async (req, res) => {
             username: normalizedUsername,
             hashPassword,
             email: normalizedEmail,
-            displayName: `${lastName.trim()} ${firstName.trim()}`,
+            displayName: `${normalizedLastName} ${normalizedFirstName}`,
         });
 
         //return
@@ -97,7 +104,7 @@ export const signIn = async (req, res) => {
         //get data from req body
         const { username, password } = req.body;
 
-        if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password) {
+        if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password || username.length > 30 || password.length > 72) {
             return res.status(400).json({ message: "All fields are required" });
         }
         //get hash password from db

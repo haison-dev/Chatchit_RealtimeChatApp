@@ -1,9 +1,10 @@
 import express from "express";
 import { getImage, uploadImage } from "../controllers/uploadController.js";
+import { uploadLimiter } from "../middlewares/securityMiddleware.js";
 
 const router = express.Router();
 
-router.post("/images", express.raw({ type: ["image/jpeg", "image/png", "image/gif", "image/webp"], limit: "5mb" }), uploadImage);
+router.post("/images", uploadLimiter, express.raw({ type: ["image/jpeg", "image/png", "image/gif", "image/webp"], limit: "5mb" }), uploadImage);
 router.get("/images/:imageId", getImage);
 
 router.use((error, _req, res, next) => {
