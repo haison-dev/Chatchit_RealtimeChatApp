@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { formatOnlineTime, cn } from "@/lib/utils";
 import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface ChatCardProps {
     convoId: string;
@@ -11,6 +13,8 @@ interface ChatCardProps {
     unreadCount?: number;
     leftSection: React.ReactNode;
     subtitle: React.ReactNode;
+    /** DropdownMenuItem elements for the "..." menu; no menu is shown without them. */
+    menu?: React.ReactNode;
 }
 
 const ChatCard = ({
@@ -22,12 +26,13 @@ const ChatCard = ({
     unreadCount,
     leftSection,
     subtitle,
+    menu,
 }: ChatCardProps) => {
     return (
         <Card
             key={convoId}
             className={cn(
-                "border-none p-3 cursor-pointer transition-smooth glass hover:bg-muted/30",
+                "group border-none p-3 cursor-pointer transition-smooth glass hover:bg-muted/30",
                 isActive &&
                 "ring-2 ring-primary/50 bg-gradient-to-tr from-primary-glow/10 to-primary-foreground"
             )}
@@ -53,7 +58,26 @@ const ChatCard = ({
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1 gap-1 min-w-0">{subtitle}</div>
-                        <MoreHorizontal className="size-4 text-muted-foreground opacity-0 group-hover:opacity-100 hover:size-5 transition-smooth" />
+                        {menu && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        aria-label={`Tùy chọn cho ${name}`}
+                                        // The card selects the conversation on click; the menu must not.
+                                        onClick={(event) => event.stopPropagation()}
+                                        className="size-6 shrink-0 text-muted-foreground md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 data-[state=open]:opacity-100"
+                                    >
+                                        <MoreHorizontal className="size-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                                    {menu}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </div>
             </div>

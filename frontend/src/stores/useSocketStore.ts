@@ -86,7 +86,13 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         useChatStore.getState().markAsSeen( );
       }
 
-      useChatStore.getState().updateConversation(updatedConversation);
+      const known = useChatStore.getState().conversations.some((item) => item._id === updatedConversation._id);
+      if (known) {
+        useChatStore.getState().updateConversation(updatedConversation);
+      } else {
+        // A conversation this user deleted comes back when a new message arrives.
+        useChatStore.setState((state) => ({ conversations: [updatedConversation, ...state.conversations] }));
+      }
     });
 
     socket.on("message-updated", (message) => {
