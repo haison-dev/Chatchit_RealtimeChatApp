@@ -5,10 +5,12 @@ import User from "../models/User.js";
 import mongoose from "mongoose";
 import { io } from "../socket/index.js";
 import { formatConversation } from "../utils/formatConversation.js";
+import { GROUP_NAME_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
 
 export const createConversation = async (req, res) => {
   try {
-    const { type, name, memberIds } = req.body;
+    const { type, memberIds } = req.body;
+    const name = sanitizeText(req.body?.name);
     const userId = req.user._id;
 
     if (!['direct', 'group'].includes(type) || !Array.isArray(memberIds) || memberIds.length === 0) {
@@ -27,8 +29,12 @@ export const createConversation = async (req, res) => {
       return res.status(400).json({ message: "A direct conversation requires exactly one recipient." });
     }
 
-    if (type === "group" && (!name?.trim() || uniqueMemberIds.length === 0)) {
+    if (type === "group" && (!name || uniqueMemberIds.length === 0)) {
       return res.status(400).json({ message: "Group name and member list are required." });
+    }
+
+    if (name.length > GROUP_NAME_MAX_LENGTH) {
+      return res.status(400).json({ message: `Group name must not exceed ${GROUP_NAME_MAX_LENGTH} characters.` });
     }
 
     let conversation;
@@ -54,7 +60,7 @@ export const createConversation = async (req, res) => {
         type: "group",
         participants: [{ userId }, ...uniqueMemberIds.map((id) => ({ userId: id }))],
         group: {
-          name: name.trim(),
+          name,
           createdBy: userId,
           admins: [userId],
         },
@@ -134,6 +140,9 @@ export const getMessages = async (req, res) => {
     const query = { conversationId };
 
     if (cursor) {
+      if (typeof cursor !== "string") {
+        return res.status(400).json({ message: "Cursor must be a valid date." });
+      }
       const cursorDate = new Date(cursor);
       if (Number.isNaN(cursorDate.getTime())) {
         return res.status(400).json({ message: "Cursor must be a valid date." });
@@ -143,7 +152,8 @@ export const getMessages = async (req, res) => {
 
     let messages = await Message.find(query)
       .sort({ createdAt: -1 })
-      .limit(parsedLimit + 1);
+      .limit(parsedLimit + 1)
+      .lean();
     let nextCursor = null;
     if (messages.length > parsedLimit) {
       const nextMesssage = messages[messages.length - 1];
@@ -165,7 +175,7 @@ export const getUserConversationsForSokectIO = async (userId) => {
     const conversations = await Conversation.find(
       { "participants.userId": userId },
       { _id: 1 },
-    );
+    ).lean();
 
     return conversations.map((c) => c._id.toString());
   } catch (error) {
@@ -247,9 +257,9 @@ const friendshipPair = (first, second) => first < second ? [first, second] : [se
 
 export const renameGroup = async (req, res) => {
   try {
-    const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
-    if (!name || name.length > 80) {
-      return res.status(400).json({ message: "Group name must be between 1 and 80 characters." });
+    const name = sanitizeText(req.body?.name);
+    if (!name || name.length > GROUP_NAME_MAX_LENGTH) {
+      return res.status(400).json({ message: `Group name must be between 1 and ${GROUP_NAME_MAX_LENGTH} characters.` });
     }
 
     req.conversation.group.name = name;

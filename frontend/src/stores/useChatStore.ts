@@ -11,6 +11,8 @@ const createClientMessageId = () =>
   globalThis.crypto?.randomUUID?.() ??
   `message-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+const inFlightMessageRequests = new Set<string>();
+
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -56,6 +58,11 @@ export const useChatStore = create<ChatState>()(
 
         if (nextCursor === null) return;
 
+        // Infinite scroll can fire again before the previous page arrives.
+        const requestKey = `${convoId}:${nextCursor}`;
+        if (inFlightMessageRequests.has(requestKey)) return;
+        inFlightMessageRequests.add(requestKey);
+
         set({ messageLoading: true });
 
         try {
@@ -88,7 +95,8 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           console.error("Lỗi xảy ra khi fetchMessages:", error);
         } finally {
-          set({ messageLoading: false });
+          inFlightMessageRequests.delete(requestKey);
+          set({ messageLoading: inFlightMessageRequests.size > 0 });
         }
       },
       sendDirectMessage: async (recipientId, content, imgUrl) => {

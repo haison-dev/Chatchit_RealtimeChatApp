@@ -33,6 +33,8 @@ const messageSchema = new mongoose.Schema(
 
 messageSchema.index({ conversationId: 1, createdAt: -1 });
 messageSchema.index({ conversationId: 1, content: 1 });
+// getImage looks up the message that owns an image on every non-uploader view.
+messageSchema.index({ imgUrl: 1 }, { partialFilterExpression: { imgUrl: { $type: "string" } } });
 messageSchema.index(
   { senderId: 1, clientMessageId: 1 },
   { unique: true, partialFilterExpression: { clientMessageId: { $type: "string" } } },

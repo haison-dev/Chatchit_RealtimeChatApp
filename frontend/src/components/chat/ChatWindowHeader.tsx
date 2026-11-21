@@ -11,13 +11,16 @@ import GroupSettingsDialog from "./GroupSettingsDialog";
 import MessageSearchDialog from "./MessageSearchDialog";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
-  const { conversations, activeConversationId } = useChatStore();
-  const { user } = useAuthStore();
-  const { onlineUsers, typingUsers } = useSocketStore();
+  const activeConvo = useChatStore((state) =>
+    chat ? undefined : state.conversations.find((c) => c._id === state.activeConversationId),
+  );
+  const user = useAuthStore((state) => state.user);
+  chat = chat ?? activeConvo;
+  const chatId = chat?._id;
+  const onlineUsers = useSocketStore((state) => state.onlineUsers);
+  const activeTypingUsers = useSocketStore((state) => (chatId ? state.typingUsers[chatId] : undefined)) ?? [];
 
-  let otherUser;  
-
-  chat = chat ?? conversations.find((c) => c._id === activeConversationId);
+  let otherUser;
 
   if (!chat) {
     return (
@@ -34,7 +37,6 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     if (!user || !otherUsers) return;
   }
 
-  const activeTypingUsers = typingUsers[chat._id] ?? [];
   const typingLabel = activeTypingUsers.length === 0
     ? null
     : chat.type === "direct"

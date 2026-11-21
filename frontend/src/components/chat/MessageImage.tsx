@@ -1,30 +1,55 @@
 import { useEffect, useState } from "react";
-import { chatService } from "@/services/chatService";
+import { ImageOff } from "lucide-react";
+import { loadImage } from "@/lib/imageCache";
 
 const MessageImage = ({ imageUrl, alt = "Ảnh trong tin nhắn" }: { imageUrl: string; alt?: string }) => {
-  const [source, setSource] = useState<string | null | undefined>(undefined);
+  // Results are tagged with the URL they belong to, so a stale result is ignored
+  // automatically when imageUrl changes, without resetting state in the effect.
+  const [result, setResult] = useState<{ for: string; src: string | null } | null>(null);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const source = result?.for === imageUrl ? result.src : undefined;
+  const loaded = loadedFor === imageUrl;
+  const setSource = (src: string | null) => setResult({ for: imageUrl, src });
+  const setLoaded = () => setLoadedFor(imageUrl);
 
   useEffect(() => {
-    let objectUrl: string | null = null;
     let cancelled = false;
-    void chatService.getImage(imageUrl).then((blob) => {
-      if (cancelled) return;
-      objectUrl = URL.createObjectURL(blob);
-      setSource(objectUrl);
-    }).catch(() => setSource(null));
+    loadImage(imageUrl)
+      .then((url) => { if (!cancelled) setResult({ for: imageUrl, src: url }); })
+      .catch(() => { if (!cancelled) setResult({ for: imageUrl, src: null }); });
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [imageUrl]);
 
-  if (source === undefined) {
-    return <div className="h-32 w-48 animate-pulse rounded-md bg-muted" aria-label="Đang tải ảnh" />;
+  if (source === null) {
+    return (
+      <div className="flex h-24 w-40 flex-col items-center justify-center gap-1 rounded-md bg-muted text-xs text-muted-foreground">
+        <ImageOff className="size-5" />
+        Không thể tải ảnh
+      </div>
+    );
   }
 
-  if (source === null) return <p className="text-xs text-destructive">Không thể tải ảnh.</p>;
-
-  return <img src={source} alt={alt} className="max-h-72 max-w-full rounded-md object-contain" loading="lazy" />;
+  return (
+    <div className="relative">
+      {(!source || !loaded) && (
+        <div className="h-32 w-48 animate-pulse rounded-md bg-muted" role="status" aria-label="Đang tải ảnh" />
+      )}
+      {source && (
+        <a href={source} target="_blank" rel="noopener noreferrer" aria-label="Mở ảnh kích thước đầy đủ">
+          <img
+            src={source}
+            alt={alt}
+            decoding="async"
+            onLoad={setLoaded}
+            onError={() => setSource(null)}
+            className={loaded ? "max-h-72 max-w-full rounded-md object-contain" : "absolute h-0 w-0 opacity-0"}
+          />
+        </a>
+      )}
+    </div>
+  );
 };
 
 export default MessageImage;

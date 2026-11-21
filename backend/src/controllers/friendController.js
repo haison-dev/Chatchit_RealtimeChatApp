@@ -1,12 +1,23 @@
 import Friend from "../models/Friend.js";
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import mongoose from "mongoose";
 import { io } from "../socket/index.js";
+import { FRIEND_REQUEST_MESSAGE_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
 
 export const sendFriendRequest = async (req, res) => {
     try {
         const { to, message } = req.body;
         const from = req.user._id;
+
+        if (typeof to !== "string" || !mongoose.isValidObjectId(to)) {
+            return res.status(400).json({ message: "A valid recipient ID is required." });
+        }
+
+        const requestMessage = sanitizeText(message, { multiline: true });
+        if (requestMessage.length > FRIEND_REQUEST_MESSAGE_MAX_LENGTH) {
+            return res.status(400).json({ message: `Message must not exceed ${FRIEND_REQUEST_MESSAGE_MAX_LENGTH} characters.` });
+        }
 
         if (from.toString() === to?.toString()) {
             return res
@@ -57,7 +68,7 @@ export const sendFriendRequest = async (req, res) => {
         const request = await FriendRequest.create({
             from,
             to,
-            message: typeof message === 'string' ? message.trim() : undefined,
+            message: requestMessage || undefined,
         });
 
         await request.populate([
