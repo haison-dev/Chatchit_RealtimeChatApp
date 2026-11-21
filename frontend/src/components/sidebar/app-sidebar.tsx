@@ -17,7 +17,6 @@ import { Switch } from "../ui/switch"
 import CreateNewChat from "../chat/CreateNewChat"
 import NewGroupChatModal from "../chat/NewGroupChatModal"
 import GroupChatList from "../chat/GroupChatList"
-import AddFriendModal from "../chat/AddFriendModal"
 import DirectMessageList from "../chat/DirectMessageList"
 import { useThemeStore } from "@/stores/useThemeStore"
 import { NavUser } from "./nav-user"
@@ -108,7 +107,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroupLabel>
             <div className="flex shrink-0 items-center gap-1">
               <FriendRequestButton />
-              <AddFriendModal />
             </div>
           </div>
 

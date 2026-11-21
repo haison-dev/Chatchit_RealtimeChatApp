@@ -8,18 +8,6 @@ export const useFriendStore = create<FriendState>((set) => ({
   receivedList: [],
   sentList: [],
 
-  searchByUsername: async (username) => {
-    set({ loading: true });
-    try {
-      return await friendService.searchByUserName(username);
-    } catch (error) {
-      console.error("Unable to find user by username", error);
-      return null;
-    } finally {
-      set({ loading: false });
-    }
-  },
-
   addFriend: async (to, message) => {
     set({ loading: true });
     try {
