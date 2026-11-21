@@ -22,7 +22,7 @@ const renderForm = () =>
 
 // Label text includes the visible "*" of the required mark.
 const FIRST_NAME = /^tên\*$/i;
-const requiredFields = [/^họ/i, FIRST_NAME, /tên đăng nhập/i, /email/i, /mật khẩu/i];
+const requiredFields = [/^họ/i, FIRST_NAME, /tên đăng nhập/i, /email/i, /^mật khẩu/i];
 
 describe("SignupForm", () => {
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe("SignupForm", () => {
     await user.type(screen.getByLabelText(FIRST_NAME), "Sơn");
     await user.type(screen.getByLabelText(/tên đăng nhập/i), "hason");
     await user.type(screen.getByLabelText(/email/i), "son@example.com");
-    await user.type(screen.getByLabelText(/mật khẩu/i), "secret12");
+    await user.type(screen.getByLabelText(/^mật khẩu/i), "secret12");
     await user.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
 
     expect(signUp).toHaveBeenCalledWith("hason", "secret12", "son@example.com", "Sơn", "Nguyễn");
