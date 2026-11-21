@@ -20,12 +20,12 @@ import type { User } from "@/types/user";
 import Logout from "../auth/Logout";
 import { useState } from "react";
 import FriendRequestsDialog from "../FriendRequest/FriendRequestsDialog";
-import { useProfileStore } from "@/stores/useProfileStore";
+import { Link } from "react-router";
+import { profilePath } from "@/lib/routes";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
   const [friendRequestOpen, setFriendRequestOpen] = useState(false);
-  const openProfile = useProfileStore((state) => state.openProfile);
 
   return (
     <>
@@ -75,9 +75,11 @@ export function NavUser({ user }: { user: User }) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => openProfile(user._id)}>
-                  <UserIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
-                  Hồ sơ của tôi
+                <DropdownMenuItem asChild>
+                  <Link to={profilePath(user._id)}>
+                    <UserIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
+                    Hồ sơ của tôi
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFriendRequestOpen(true)}>
                   <Bell className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
