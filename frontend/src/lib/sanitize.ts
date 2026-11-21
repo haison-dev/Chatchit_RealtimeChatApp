@@ -37,3 +37,21 @@ export const sanitizeText = (value: unknown, { multiline = false } = {}): string
 
   return text.trim();
 };
+
+// Profile and search limits. Keep in sync with backend/src/utils/sanitize.js.
+export const DISPLAY_NAME_MAX_LENGTH = PERSON_NAME_MAX_LENGTH * 2 + 1;
+export const BIO_MAX_LENGTH = 500;
+export const AVATAR_URL_MAX_LENGTH = 500;
+export const PHONE_PATTERN = /^\+?[0-9 ()-]{6,20}$/;
+export const SEARCH_QUERY_MIN_LENGTH = 2;
+export const SEARCH_QUERY_MAX_LENGTH = 100;
+
+/** True for an https URL without embedded credentials (the only avatar URLs the server accepts). */
+export const isHttpsUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+};

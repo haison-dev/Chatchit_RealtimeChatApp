@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
 import type { AuthState } from "@/types/store";
 import { persist } from "zustand/middleware";
 import { useChatStore } from "./useChatStore";
@@ -98,6 +99,16 @@ export const useAuthStore = create<AuthState>()(
           toast.error("Lỗi xảy ra khi lấy dữ liệu người dùng. Hãy thử lại!");
         } finally {
           set({ loading: false });
+        }
+      },
+
+      updateProfile: async (input) => {
+        const previous = get().user;
+        const user = await userService.updateMe(input);
+        set({ user });
+        // Names and avatars are copied into the conversation list, so reload it.
+        if (previous && (previous.displayName !== user.displayName || previous.avatarUrl !== user.avatarUrl)) {
+          void useChatStore.getState().fetchConversations();
         }
       },
 

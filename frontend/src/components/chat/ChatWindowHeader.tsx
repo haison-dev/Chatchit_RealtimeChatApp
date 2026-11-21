@@ -1,5 +1,5 @@
 import { useChatStore } from "@/stores/useChatStore";
-import type { Conversation } from "@/types/chat";
+import type { Conversation, Participant } from "@/types/chat";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Separator } from "../ui/separator";
@@ -9,18 +9,20 @@ import GroupChatAvatar from "./GroupChatAvatar";
 import { useSocketStore } from "@/stores/useSocketStore";
 import GroupSettingsDialog from "./GroupSettingsDialog";
 import MessageSearchDialog from "./MessageSearchDialog";
+import { useProfileStore } from "@/stores/useProfileStore";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const activeConvo = useChatStore((state) =>
     chat ? undefined : state.conversations.find((c) => c._id === state.activeConversationId),
   );
   const user = useAuthStore((state) => state.user);
+  const openProfile = useProfileStore((state) => state.openProfile);
   chat = chat ?? activeConvo;
   const chatId = chat?._id;
   const onlineUsers = useSocketStore((state) => state.onlineUsers);
   const activeTypingUsers = useSocketStore((state) => (chatId ? state.typingUsers[chatId] : undefined)) ?? [];
 
-  let otherUser;
+  let otherUser: Participant | null | undefined;
 
   if (!chat) {
     return (
@@ -55,11 +57,18 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
             {
               chat.type === "direct" ? (
                 <>
-                  <UserAvatar
-                    type={"sidebar"}
-                    name={otherUser?.displayName || "Chatchit"}
-                    avatarUrl={otherUser?.avatarUrl || undefined}
+                  <button
+                    type="button"
+                    onClick={() => otherUser && openProfile(otherUser._id)}
+                    className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`Xem hồ sơ ${otherUser?.displayName ?? ""}`}
+                  >
+                    <UserAvatar
+                      type={"sidebar"}
+                      name={otherUser?.displayName || "Chatchit"}
+                      avatarUrl={otherUser?.avatarUrl || undefined}
                     />
+                  </button>
                   <StatusBadge status={
                     onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"
                     }

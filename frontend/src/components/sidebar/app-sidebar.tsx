@@ -22,6 +22,7 @@ import { useThemeStore } from "@/stores/useThemeStore"
 import { NavUser } from "./nav-user"
 import { useAuthStore } from "@/stores/useAuthStore"
 import FriendRequestButton from "../FriendRequest/FriendRequestButton"
+import UserSearchDialog from "../profile/UserSearchDialog"
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -61,7 +62,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* New chat */}
         <SidebarGroup>
           <SidebarGroupContent>
-            <CreateNewChat />
+            <div className="space-y-2">
+              <CreateNewChat />
+              <UserSearchDialog />
+            </div>
           </SidebarGroupContent>
         </SidebarGroup>
 
