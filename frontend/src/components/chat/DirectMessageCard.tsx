@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import type { Conversation } from "@/types/chat";
 import ChatCard from "./ChatCard";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -9,29 +10,26 @@ import UnreadCountBadge from "./UnreadCountBadge";
 import { useSocketStore } from "@/stores/useSocketStore";
 
 const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
-  const { user } = useAuthStore();
-  const {
-    activeConversationId,
-    setActiveConversation,
-    messages,
-    fetchMessages,
-  } = useChatStore();
-  const { onlineUsers } = useSocketStore();
+  const userId = useAuthStore((state) => state.user?._id);
+  const isActive = useChatStore((state) => state.activeConversationId === convo._id);
+  const setActiveConversation = useChatStore((state) => state.setActiveConversation);
+  const fetchMessages = useChatStore((state) => state.fetchMessages);
+  const otherUser = userId ? convo.participants.find((p) => p._id !== userId) : undefined;
+  // Subscribe to this contact's presence only, not the whole online list.
+  const isOnline = useSocketStore((state) => !!otherUser && state.onlineUsers.includes(otherUser._id));
 
-  if (!user) return null;
-
-  const otherUser = convo.participants.find((p) => p._id !== user._id);
-  if (!otherUser) return null;
-
-  const unreadCount = convo.unreadCounts[user._id];
-  const lastMessage = convo.lastMessage?.content ?? "";
-
-  const handleSelectConversation = async (id: string) => {
+  const handleSelectConversation = useCallback(async (id: string) => {
     setActiveConversation(id);
-    if (!messages[id]) {
-      await fetchMessages();
+    if (!useChatStore.getState().messages[id]) {
+      await fetchMessages(id);
     }
-  };
+  }, [fetchMessages, setActiveConversation]);
+
+  if (!userId || !otherUser) return null;
+
+  const unreadCount = convo.unreadCounts[userId] ?? 0;
+  const lastMessage = convo.lastMessage?.content ?? "";
+  const isOwnLast = convo.lastMessage?.sender?._id === userId;
 
   return (
     <ChatCard
@@ -42,7 +40,7 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
           ? new Date(convo.lastMessage.createdAt)
           : undefined
       }
-      isActive={activeConversationId === convo._id}
+      isActive={isActive}
       onSelect={handleSelectConversation}
       unreadCount={unreadCount}
       leftSection={
@@ -52,11 +50,7 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
             name={otherUser.displayName ?? ""}
             avatarUrl={otherUser.avatarUrl ?? undefined}
           />
-          <StatusBadge
-            status={
-              onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"
-            }
-          />
+          <StatusBadge status={isOnline ? "online" : "offline"} />
           {unreadCount > 0 && <UnreadCountBadge unreadCount={unreadCount} />}
         </>
       }
@@ -69,11 +63,11 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
               : "text-muted-foreground",
           )}
         >
-          {lastMessage}
+          {lastMessage ? `${isOwnLast ? "Bạn: " : ""}${lastMessage}` : "Bắt đầu trò chuyện"}
         </p>
       }
     />
   );
 };
 
-export default DirectMessageCard;
+export default memo(DirectMessageCard);

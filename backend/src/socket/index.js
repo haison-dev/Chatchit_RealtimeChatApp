@@ -10,6 +10,8 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
+  // Clients only send small control events; reject oversized frames early.
+  maxHttpBufferSize: 16 * 1024,
   cors: {
     origin: process.env.CLIENT_URL,
     credentials: true,
@@ -24,10 +26,27 @@ const broadcastOnlineUsers = () => {
   io.emit("online-users", Array.from(onlineUsers.keys()));
 };
 
+const isConversationId = (value) => typeof value === "string" && /^[a-f\d]{24}$/i.test(value);
+
+// Simple per-socket token bucket so a client cannot flood rooms with events.
+const createEventLimiter = (capacity, refillPerSecond) => {
+  let tokens = capacity;
+  let last = Date.now();
+  return () => {
+    const now = Date.now();
+    tokens = Math.min(capacity, tokens + ((now - last) / 1000) * refillPerSecond);
+    last = now;
+    if (tokens < 1) return false;
+    tokens -= 1;
+    return true;
+  };
+};
+
 io.on("connection", async (socket) => {
   const user = socket.user;
   const userId = user._id.toString();
   console.log(`${user.displayName} online with socket ${socket.id}`);
+  const allowEvent = createEventLimiter(20, 5);
 
   const userSockets = onlineUsers.get(userId) ?? new Set();
   userSockets.add(socket.id);
@@ -41,6 +60,10 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("join-conversation", async (conversationId, acknowledge) => {
+    if (typeof acknowledge !== "function") acknowledge = undefined;
+    if (!isConversationId(conversationId) || !allowEvent()) {
+      return acknowledge?.({ ok: false, message: "Unable to join conversation." });
+    }
     try {
       const authorization = await authorizeConversationJoin(user._id, conversationId);
       if (!authorization.ok) {
@@ -56,11 +79,14 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("leave-conversation", (conversationId) => {
+    // Never let a client leave its personal notification room.
+    if (!isConversationId(conversationId) || conversationId === userId) return;
     socket.leave(conversationId);
   });
 
   socket.on("typing-start", (conversationId) => {
-    if (!socket.rooms.has(conversationId)) return;
+    if (!isConversationId(conversationId) || conversationId === userId) return;
+    if (!socket.rooms.has(conversationId) || !allowEvent()) return;
     socket.to(conversationId).emit("typing-start", {
       conversationId,
       user: { _id: userId, displayName: user.displayName },
@@ -68,7 +94,8 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("typing-stop", (conversationId) => {
-    if (!socket.rooms.has(conversationId)) return;
+    if (!isConversationId(conversationId) || conversationId === userId) return;
+    if (!socket.rooms.has(conversationId) || !allowEvent()) return;
     socket.to(conversationId).emit("typing-stop", {
       conversationId,
       userId,
