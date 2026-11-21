@@ -46,8 +46,8 @@ const SignUpPage = () => {
             ))}
           </ul>
 
-          {/* decorative floating chat bubbles */}
-          <div className="pointer-events-none absolute -bottom-2 right-4 hidden w-64 space-y-3 lg:block" aria-hidden="true">
+          {/* decorative floating chat bubbles, in the flow so they never cover the text above */}
+          <div className="pointer-events-none mt-8 hidden space-y-3 lg:block" aria-hidden="true">
             <div className="float-slow ml-auto w-fit rounded-2xl rounded-br-sm bg-white px-4 py-2 text-sm font-medium text-violet-700 shadow-lg">
               Chào bạn! 👋
             </div>

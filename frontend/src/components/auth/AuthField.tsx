@@ -28,7 +28,7 @@ const AuthField = forwardRef<HTMLInputElement, AuthFieldProps>(
 
     return (
       <div className="space-y-1.5">
-        <Label htmlFor={id} className="text-sm font-medium">
+        <Label htmlFor={id} className="gap-0 text-sm font-medium">
           {label}
           {required && <RequiredMark />}
         </Label>
