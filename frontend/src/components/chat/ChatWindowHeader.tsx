@@ -9,14 +9,14 @@ import GroupChatAvatar from "./GroupChatAvatar";
 import { useSocketStore } from "@/stores/useSocketStore";
 import GroupSettingsDialog from "./GroupSettingsDialog";
 import MessageSearchDialog from "./MessageSearchDialog";
-import { useProfileStore } from "@/stores/useProfileStore";
+import { Link } from "react-router";
+import { profilePath } from "@/lib/routes";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const activeConvo = useChatStore((state) =>
     chat ? undefined : state.conversations.find((c) => c._id === state.activeConversationId),
   );
   const user = useAuthStore((state) => state.user);
-  const openProfile = useProfileStore((state) => state.openProfile);
   chat = chat ?? activeConvo;
   const chatId = chat?._id;
   const onlineUsers = useSocketStore((state) => state.onlineUsers);
@@ -57,10 +57,9 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
             {
               chat.type === "direct" ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => otherUser && openProfile(otherUser._id)}
-                    className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  <Link
+                    to={otherUser ? profilePath(otherUser._id) : "#"}
+                    className="block rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={`Xem hồ sơ ${otherUser?.displayName ?? ""}`}
                   >
                     <UserAvatar
@@ -68,7 +67,7 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                       name={otherUser?.displayName || "Chatchit"}
                       avatarUrl={otherUser?.avatarUrl || undefined}
                     />
-                  </button>
+                  </Link>
                   <StatusBadge status={
                     onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"
                     }
