@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "../ui/label";
+import { RequiredMark } from "../ui/required-mark";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,7 +62,7 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0 border-border">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
+          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="flex flex-col gap-6">
               {/* header + logo */}
               <div className="flex flex-col items-center text-center gap-2">
@@ -72,14 +73,18 @@ export function SignupForm({
                 <p className="text-muted-foreground text-balance">
                   Chào mừng bạn hãy đăng kí để bắt đầu
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  Các ô có dấu <RequiredMark /> là bắt buộc
+                </p>
               </div>
               {/*  fullname */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="lastname" className="block text-sm">
-                    Họ
+                    Họ<RequiredMark />
                   </Label>
-                  <Input type="text" id="lastname"
+                  <Input type="text" id="lastname" autoComplete="family-name"
+                    aria-required="true" aria-invalid={!!errors.lastname}
                     {...register("lastname")} />
 
                   {errors.lastname && (
@@ -90,9 +95,10 @@ export function SignupForm({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="firstname" className="block text-sm">
-                    Tên
+                    Tên<RequiredMark />
                   </Label>
-                  <Input type="text" id="firstname"
+                  <Input type="text" id="firstname" autoComplete="given-name"
+                    aria-required="true" aria-invalid={!!errors.firstname}
                     {...register("firstname")} />
 
                   {errors.firstname && (
@@ -105,24 +111,29 @@ export function SignupForm({
               {/* username */}
               <div className="flex flex-col gap-3">
                 <Label htmlFor="username" className="block text-sm">
-                  Tên đăng nhập
+                  Tên đăng nhập<RequiredMark />
                 </Label>
-                <Input type="text" id="username" placeholder="Chatchit"
+                <Input type="text" id="username" placeholder="Chatchit" autoComplete="username"
+                  aria-required="true" aria-invalid={!!errors.username}
                   {...register("username")} />
 
-                {errors.username && (
+                {errors.username ? (
                   <p className="error-message">
                     {errors.username.message}
                   </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">3-30 ký tự: chữ, số, dấu chấm, gạch dưới hoặc gạch nối.</p>
                 )}
               </div>
 
               {/* email */}
               <div className="flex flex-col gap-3">
                 <Label htmlFor="email" className="block text-sm">
-                  Email
+                  Email<RequiredMark />
                 </Label>
-                <Input type="email" id="email" {...register("email")} />
+                <Input type="email" id="email" autoComplete="email"
+                  aria-required="true" aria-invalid={!!errors.email}
+                  {...register("email")} />
 
                 {errors.email && (
                   <p className="error-message">
@@ -134,14 +145,18 @@ export function SignupForm({
               {/* password */}
               <div className="flex flex-col gap-3">
                 <Label htmlFor="password" className="block text-sm">
-                  Mật khẩu
+                  Mật khẩu<RequiredMark />
                 </Label>
-                <Input type="password" id="password" {...register("password")} />
+                <Input type="password" id="password" autoComplete="new-password"
+                  aria-required="true" aria-invalid={!!errors.password}
+                  {...register("password")} />
 
-                {errors.password && (
+                {errors.password ? (
                   <p className="error-message">
                     {errors.password.message}
                   </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Từ 6 đến 72 ký tự.</p>
                 )}
               </div>
 
