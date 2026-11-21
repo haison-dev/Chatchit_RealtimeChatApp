@@ -28,3 +28,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Tài liệu và quy tắc riêng cho AI (chỉ dùng local, không push)
+CLAUDE.md
+docs/ARCHITECTURE.md
