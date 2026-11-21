@@ -6,7 +6,7 @@ import FriendRequest from "../src/models/FriendRequest.js";
 import User from "../src/models/User.js";
 import { getUserProfile, searchUsers, updateMe } from "../src/controllers/userController.js";
 import { friendPair } from "../src/utils/friendHelper.js";
-import { sanitizeAvatarUrl } from "../src/utils/sanitize.js";
+import { buildNameSearchPattern, sanitizeAvatarUrl } from "../src/utils/sanitize.js";
 
 const ME = "507f1f77bcf86cd799439011";
 const OTHER = "507f1f77bcf86cd799439012";
@@ -143,27 +143,70 @@ test("searchUsers requires a long enough query and matches email exactly", async
   await searchUsers({ user: { _id: ME }, query: { q: "a" } }, short);
   assert.equal(short.result.statusCode, 400);
 
-  let filter;
+  const filters = [];
   await withStubs([
-    [User, "find", (value) => { filter = value; return chain([]); }],
+    [User, "find", (value) => { filters.push(value); return chain([]); }],
     [Friend, "find", () => chain([])],
     [FriendRequest, "find", () => chain([])],
   ], async () => {
     const res = createRes();
     await searchUsers({ user: { _id: ME }, query: { q: "Bob@Example.com" } }, res);
     assert.equal(res.result.statusCode, 200);
-    assert.deepEqual(filter.$or[1], { email: "bob@example.com" });
-    assert.equal(filter._id.$ne, ME);
+    // One query for friends and one for everybody else; both include the exact-email condition.
+    assert.equal(filters.length, 2);
+    filters.forEach((filter) => assert.deepEqual(filter.$or[1], { email: "bob@example.com" }));
+    assert.ok(filters[1]._id.$nin.includes(ME), "the viewer never finds themselves");
   });
+});
 
+test("searchUsers escapes regex characters in the query", async () => {
+  const filters = [];
   await withStubs([
-    [User, "find", (value) => { filter = value; return chain([]); }],
+    [User, "find", (value) => { filters.push(value); return chain([]); }],
     [Friend, "find", () => chain([])],
     [FriendRequest, "find", () => chain([])],
   ], async () => {
-    const res = createRes();
-    await searchUsers({ user: { _id: ME }, query: { q: "a.*" } }, res);
-    assert.equal(filter.$or.length, 1);
-    assert.equal(filter.$or[0].displayName.$regex, "a\\.\\*");
+    await searchUsers({ user: { _id: ME }, query: { q: "x.*" } }, createRes());
+    assert.equal(filters[0].$or.length, 1);
+    assert.equal(filters[0].$or[0].displayName.$regex, String.raw`x\.\*`);
   });
+});
+
+test("searchUsers lists friends before strangers and reports each relationship", async () => {
+  const FRIEND = "507f1f77bcf86cd799439021";
+  const STRANGER = "507f1f77bcf86cd799439022";
+  const calls = [];
+  await withStubs([
+    [User, "find", (value) => {
+      calls.push(value);
+      if (value._id.$in) return chain([{ _id: FRIEND, displayName: "Sơn Bạn", username: "sonban" }]);
+      if (value._id.$nin) return chain([{ _id: STRANGER, displayName: "Sơn Lạ", username: "sonla" }]);
+      return chain([]);
+    }],
+    [Friend, "find", () => chain([{ userA: ME, userB: FRIEND }])],
+    [FriendRequest, "find", () => chain([])],
+  ], async () => {
+    const res = createRes();
+    await searchUsers({ user: { _id: ME }, query: { q: "son" } }, res);
+
+    const { users } = res.result.body;
+    assert.deepEqual(users.map((user) => user._id), [FRIEND, STRANGER]);
+    assert.equal(users[0].relationship.status, "friend");
+    assert.equal(users[1].relationship.status, "none");
+    assert.deepEqual(calls[0]._id.$in, [FRIEND]);
+  });
+});
+
+test("buildNameSearchPattern ignores case and Vietnamese diacritics", () => {
+  const matches = (query, name) => new RegExp(buildNameSearchPattern(query), "i").test(name);
+
+  assert.equal(matches("son", "Nguyễn Văn Sơn"), true);
+  assert.equal(matches("SƠN", "nguyen van son"), true);
+  assert.equal(matches("nguyen van", "Nguyễn Văn Sơn"), true);
+  assert.equal(matches("duc", "Đức"), true);
+  assert.equal(matches("đức", "Duc Anh"), true);
+  assert.equal(matches("son", "Hoa"), false);
+  // Regex characters are matched literally.
+  assert.equal(matches("a.c", "abc"), false);
+  assert.equal(matches("a.c", "a.c"), true);
 });
