@@ -1,28 +1,42 @@
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "../ui/label";
+import { Link, useNavigate } from "react-router";
+import { AtSign, Loader2, Lock, Mail, UserRound } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
+import { PERSON_NAME_MAX_LENGTH, sanitizeText } from "@/lib/sanitize";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useNavigate } from "react-router";
+import { Button } from "../ui/button";
+import { RequiredMark } from "../ui/required-mark";
+import AuthField from "./AuthField";
+
+// Mirrors the server rules in backend/src/controllers/authController.js so users
+// get instant feedback; the server still validates everything.
+const personName = (requiredMessage: string) =>
+  z.string()
+    .transform((value) => sanitizeText(value))
+    .pipe(z.string()
+      .min(1, requiredMessage)
+      .max(PERSON_NAME_MAX_LENGTH, `Tối đa ${PERSON_NAME_MAX_LENGTH} ký tự`)
+      .regex(/^[\p{L}\p{M}' .-]+$/u, "Chỉ được dùng chữ cái, khoảng trắng, dấu nháy, chấm hoặc gạch nối"));
 
 const signUpSchema = z.object({
-  firstname: z.string().min(1, "Vui lòng nhập tên"),
-  lastname: z.string().min(1, "Vui lòng nhập họ"),
-  username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
-  email: z.email("Địa chỉ email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  firstname: personName("Vui lòng nhập tên"),
+  lastname: personName("Vui lòng nhập họ"),
+  username: z.string().trim()
+    .min(3, "Tên đăng nhập phải có ít nhất 3 ký tự")
+    .max(30, "Tên đăng nhập tối đa 30 ký tự")
+    .regex(/^[a-zA-Z0-9_.-]+$/, "Chỉ được dùng chữ, số, dấu chấm, gạch dưới hoặc gạch nối"),
+  email: z.string().trim().max(254, "Email quá dài").pipe(z.email("Địa chỉ email không hợp lệ")),
+  password: z.string()
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
+    .max(72, "Mật khẩu tối đa 72 ký tự"),
 });
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
-export function SignupForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+/** The sign-up fields and submit button. The page around it is `SignUpPage`. */
+export function SignupForm({ className, ...props }: React.ComponentProps<"form">) {
   const authStore = useAuthStore();
   const navigate = useNavigate();
 
@@ -39,122 +53,47 @@ export function SignupForm({
     } catch {
       // The store displays the API error; remain on the form so it can be corrected.
     }
-  }
+  };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0 border-border">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
-            <div className="flex flex-col gap-6">
-              {/* header + logo */}
-              <div className="flex flex-col items-center text-center gap-2">
-                <a href="/" className="mx-auto block w-fit text-center">
-                  <img src="/logo.svg" alt="logo" />
-                </a>
-                <h1 className="text-2xl font-bold">Tạo tài khoản Chatchit</h1>
-                <p className="text-muted-foreground text-balance">
-                  Chào mừng bạn hãy đăng kí để bắt đầu
-                </p>
-              </div>
-              {/*  fullname */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="lastname" className="block text-sm">
-                    Họ
-                  </Label>
-                  <Input type="text" id="lastname"
-                    {...register("lastname")} />
+    <form className={cn("space-y-5", className)} onSubmit={handleSubmit(onSubmit)} noValidate {...props}>
+      <p className="text-xs text-muted-foreground">
+        Các ô có dấu <RequiredMark /> là bắt buộc
+      </p>
 
-                  {errors.lastname && (
-                    <p className="error-message">
-                      {errors.lastname.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="firstname" className="block text-sm">
-                    Tên
-                  </Label>
-                  <Input type="text" id="firstname"
-                    {...register("firstname")} />
-
-                  {errors.firstname && (
-                    <p className="error-message">
-                      {errors.firstname.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {/* username */}
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="username" className="block text-sm">
-                  Tên đăng nhập
-                </Label>
-                <Input type="text" id="username" placeholder="Chatchit"
-                  {...register("username")} />
-
-                {errors.username && (
-                  <p className="error-message">
-                    {errors.username.message}
-                  </p>
-                )}
-              </div>
-
-              {/* email */}
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="email" className="block text-sm">
-                  Email
-                </Label>
-                <Input type="email" id="email" {...register("email")} />
-
-                {errors.email && (
-                  <p className="error-message">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              {/* password */}
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="password" className="block text-sm">
-                  Mật khẩu
-                </Label>
-                <Input type="password" id="password" {...register("password")} />
-
-                {errors.password && (
-                  <p className="error-message">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              {/* signup button */}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                Tạo tài khoản
-              </Button>
-
-              <div className="text-center text-sm">
-                Đã có tài khoản?{" "}
-                <a href="/signin" className="underline underline-offset-4">
-                  Đăng nhập
-                </a>
-              </div>
-            </div>
-          </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholderSignUp.png"
-              alt="Image"
-              className="absolute top-1/2 -translate-y-1/2 object-cover"
-            />
-          </div>
-        </CardContent>
-      </Card>
-      <div className="text-xs text-balance px-6 text-center *:[a]:hover:text-primary text-muted-foreground *:[a]:underline *:[a]:underline-offset-4">
-        Bằng cách tiếp tục, bạn đồng ý với <a href="#">Điều khoản dịch vụ</a> và{" "}
-        <a href="#">Chính sách bảo mậ của chúng tôi</a>.
+      <div className="grid gap-4 sm:grid-cols-2">
+        <AuthField id="lastname" label="Họ" icon={UserRound} required autoComplete="family-name"
+          placeholder="Nguyễn" error={errors.lastname?.message} {...register("lastname")} />
+        <AuthField id="firstname" label="Tên" icon={UserRound} required autoComplete="given-name"
+          placeholder="Sơn" error={errors.firstname?.message} {...register("firstname")} />
       </div>
-    </div>
+
+      <AuthField id="username" label="Tên đăng nhập" icon={AtSign} required autoComplete="username"
+        placeholder="chatchit"
+        hint="3-30 ký tự: chữ, số, dấu chấm, gạch dưới hoặc gạch nối."
+        error={errors.username?.message} {...register("username")} />
+
+      <AuthField id="email" type="email" label="Email" icon={Mail} required autoComplete="email"
+        placeholder="ban@example.com" error={errors.email?.message} {...register("email")} />
+
+      <AuthField id="password" type="password" label="Mật khẩu" icon={Lock} required autoComplete="new-password"
+        hint="Từ 6 đến 72 ký tự." error={errors.password?.message} {...register("password")} />
+
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="h-11 w-full rounded-xl bg-gradient-chat text-base font-semibold text-white shadow-md transition hover:opacity-90"
+      >
+        {isSubmitting && <Loader2 className="animate-spin" />}
+        {isSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
+      </Button>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Đã có tài khoản?{" "}
+        <Link to="/signin" className="font-semibold text-primary underline-offset-4 hover:underline">
+          Đăng nhập
+        </Link>
+      </p>
+    </form>
   );
 }

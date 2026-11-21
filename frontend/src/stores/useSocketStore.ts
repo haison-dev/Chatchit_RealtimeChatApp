@@ -86,7 +86,13 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         useChatStore.getState().markAsSeen( );
       }
 
-      useChatStore.getState().updateConversation(updatedConversation);
+      const known = useChatStore.getState().conversations.some((item) => item._id === updatedConversation._id);
+      if (known) {
+        useChatStore.getState().updateConversation(updatedConversation);
+      } else {
+        // A conversation this user deleted comes back when a new message arrives.
+        useChatStore.setState((state) => ({ conversations: [updatedConversation, ...state.conversations] }));
+      }
     });
 
     socket.on("message-updated", (message) => {
@@ -143,6 +149,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useFriendStore.getState().resolveRequest(requestId);
       if (friend) useFriendStore.getState().receiveFriend(friend);
       toast.success(`${friend?.displayName ?? "Người dùng"} đã trở thành bạn bè của bạn.`);
+    });
+
+    // The friendship ended (either side); the payload is the id of the other person.
+    socket.on("friend-removed", ({ userId }) => {
+      useFriendStore.getState().dropFriend(userId);
     });
 
     socket.on("friend-request:declined", ({ requestId }) => {

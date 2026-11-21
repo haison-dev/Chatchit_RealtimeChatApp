@@ -1,16 +1,18 @@
 import express from 'express';
 
-import { addGroupMembers, createConversation, getConversations, getMessages, leaveGroup, markAsSeen, removeGroupMember, renameGroup, updateGroupAdmin } from '../controllers/conversationController.js';
+import { addGroupMembers, createConversation, deleteConversation, getConversations, getMessages, leaveGroup, markAsSeen, removeGroupMember, renameGroup, updateGroupAdmin } from '../controllers/conversationController.js';
 import { checkFriendship } from '../middlewares/friendMiddleware.js';
 import { requireConversationMember, requireGroupAdmin, requireGroupMember } from '../middlewares/conversationMiddleware.js';
 import { searchMessages } from '../controllers/messageActionsController.js';
+import { searchLimiter } from '../middlewares/securityMiddleware.js';
 
 const router = express.Router();
 
 router.post('/', checkFriendship, createConversation);
 router.get('/', getConversations);
 router.get('/:conversationId/messages', requireConversationMember, getMessages);
-router.get('/:conversationId/messages/search', requireConversationMember, searchMessages);
+router.get('/:conversationId/messages/search', searchLimiter, requireConversationMember, searchMessages);
+router.delete("/:conversationId", requireConversationMember, deleteConversation);
 router.patch("/:conversationId/seen", requireConversationMember, markAsSeen);
 router.patch("/:conversationId/group", requireConversationMember, requireGroupAdmin, renameGroup);
 router.post("/:conversationId/members", requireConversationMember, requireGroupAdmin, addGroupMembers);

@@ -56,7 +56,10 @@ test("conversation API returns cursor-paginated history to members", async () =>
     sort() {
       return this;
     },
-    async limit() {
+    limit() {
+      return this;
+    },
+    async lean() {
       return [...messages];
     },
   });

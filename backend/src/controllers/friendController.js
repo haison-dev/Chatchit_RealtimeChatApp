@@ -1,12 +1,24 @@
 import Friend from "../models/Friend.js";
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import mongoose from "mongoose";
 import { io } from "../socket/index.js";
+import { FRIEND_REQUEST_MESSAGE_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
+import { friendPair } from "../utils/friendHelper.js";
 
 export const sendFriendRequest = async (req, res) => {
     try {
         const { to, message } = req.body;
         const from = req.user._id;
+
+        if (typeof to !== "string" || !mongoose.isValidObjectId(to)) {
+            return res.status(400).json({ message: "A valid recipient ID is required." });
+        }
+
+        const requestMessage = sanitizeText(message, { multiline: true });
+        if (requestMessage.length > FRIEND_REQUEST_MESSAGE_MAX_LENGTH) {
+            return res.status(400).json({ message: `Message must not exceed ${FRIEND_REQUEST_MESSAGE_MAX_LENGTH} characters.` });
+        }
 
         if (from.toString() === to?.toString()) {
             return res
@@ -22,12 +34,7 @@ export const sendFriendRequest = async (req, res) => {
                 .json({ message: "The user you are trying to add does not exist." });
         }
 
-        let userA = from.toString();
-        let userB = to.toString();
-
-        if (userA > userB) {
-            [userA, userB] = [userB, userA];
-        }
+        const [userA, userB] = friendPair(from, to);
 
         const [alreadyFriends, existingRequest] = await Promise.all([
             Friend.findOne({ userA, userB }),
@@ -57,7 +64,7 @@ export const sendFriendRequest = async (req, res) => {
         const request = await FriendRequest.create({
             from,
             to,
-            message: typeof message === 'string' ? message.trim() : undefined,
+            message: requestMessage || undefined,
         });
 
         await request.populate([
@@ -160,6 +167,33 @@ export const declineFriendRequest = async (req, res) => {
         return res.status(204).json({ message: "Friend request declined." });
     } catch (error) {
         console.error("Error declining friend request:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// DELETE /friends/:friendId: remove the friendship for both people.
+export const removeFriend = async (req, res) => {
+    try {
+        const { friendId } = req.params;
+        const userId = req.user._id.toString();
+
+        if (!mongoose.isValidObjectId(friendId) || friendId === userId) {
+            return res.status(400).json({ message: "A valid friend ID is required." });
+        }
+
+        const [userA, userB] = friendPair(userId, friendId);
+        const removed = await Friend.findOneAndDelete({ userA, userB });
+        if (!removed) {
+            return res.status(404).json({ message: "You are not friends with this user." });
+        }
+
+        // Each side learns the id of the other person so both lists update.
+        io.to(userId).emit("friend-removed", { userId: friendId });
+        io.to(friendId).emit("friend-removed", { userId });
+
+        return res.status(204).send();
+    } catch (error) {
+        console.error("Error removing friend:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 };

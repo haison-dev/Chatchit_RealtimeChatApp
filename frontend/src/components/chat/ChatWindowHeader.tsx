@@ -1,6 +1,6 @@
 import { useChatStore } from "@/stores/useChatStore";
-import type { Conversation } from "@/types/chat";
-import { SidebarTrigger } from "../ui/sidebar";
+import type { Conversation, Participant } from "@/types/chat";
+import { SidebarTrigger, useSidebar } from "../ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Separator } from "../ui/separator";
 import UserAvatar from "./UserAvatar";
@@ -9,20 +9,29 @@ import GroupChatAvatar from "./GroupChatAvatar";
 import { useSocketStore } from "@/stores/useSocketStore";
 import GroupSettingsDialog from "./GroupSettingsDialog";
 import MessageSearchDialog from "./MessageSearchDialog";
+import { Link } from "react-router";
+import { profilePath } from "@/lib/routes";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
-  const { conversations, activeConversationId } = useChatStore();
-  const { user } = useAuthStore();
-  const { onlineUsers, typingUsers } = useSocketStore();
+  const activeConvo = useChatStore((state) =>
+    chat ? undefined : state.conversations.find((c) => c._id === state.activeConversationId),
+  );
+  const user = useAuthStore((state) => state.user);
+  const { isMobile, state: sidebarState } = useSidebar();
+  chat = chat ?? activeConvo;
+  const chatId = chat?._id;
+  const onlineUsers = useSocketStore((state) => state.onlineUsers);
+  const activeTypingUsers = useSocketStore((state) => (chatId ? state.typingUsers[chatId] : undefined)) ?? [];
 
-  let otherUser;  
-
-  chat = chat ?? conversations.find((c) => c._id === activeConversationId);
+  let otherUser: Participant | null | undefined;
 
   if (!chat) {
+    // Without a conversation there is no other header, so the toggle must be offered
+    // whenever the sidebar is hidden; otherwise a collapsed sidebar cannot be reopened.
+    if (!isMobile && sidebarState === "expanded") return null;
     return (
-      <header className="md:hidden sticky top-0 z-10 flex items-center gap-2 px-4 py-2 w-full">
-        <SidebarTrigger className="-ml-1 text-foreground" />
+      <header className="sticky top-0 z-10 flex w-full items-center gap-2 px-4 py-2">
+        <SidebarTrigger className="-ml-1 text-foreground" aria-label="Mở danh sách trò chuyện" />
       </header>
     );
   }
@@ -34,7 +43,6 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     if (!user || !otherUsers) return;
   }
 
-  const activeTypingUsers = typingUsers[chat._id] ?? [];
   const typingLabel = activeTypingUsers.length === 0
     ? null
     : chat.type === "direct"
@@ -53,11 +61,17 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
             {
               chat.type === "direct" ? (
                 <>
-                  <UserAvatar
-                    type={"sidebar"}
-                    name={otherUser?.displayName || "Chatchit"}
-                    avatarUrl={otherUser?.avatarUrl || undefined}
+                  <Link
+                    to={otherUser ? profilePath(otherUser._id) : "#"}
+                    className="block rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`Xem hồ sơ ${otherUser?.displayName ?? ""}`}
+                  >
+                    <UserAvatar
+                      type={"sidebar"}
+                      name={otherUser?.displayName || "Chatchit"}
+                      avatarUrl={otherUser?.avatarUrl || undefined}
                     />
+                  </Link>
                   <StatusBadge status={
                     onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"
                     }

@@ -2,12 +2,26 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, "haison/**"]
+    paths-ignore: ["**/*.md", "docs/**"]
   pull_request:
+    branches: [main, dev]
+    paths-ignore: ["**/*.md", "docs/**"]
+  workflow_dispatch:
+
+# Only the latest run per branch/PR matters; cancel superseded runs.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   backend:
+    name: Backend (lint cú pháp, test, audit)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
@@ -18,12 +32,19 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: backend/package-lock.json
-      - run: npm ci
-      - run: npm test
-      - run: npm audit --omit=dev
+      - name: Cài dependencies
+        run: npm ci
+      - name: Kiểm tra cú pháp toàn bộ source
+        run: find src -name "*.js" -print0 | xargs -0 -n1 node --check
+      - name: Chạy test
+        run: npm test
+      - name: Kiểm tra lỗ hổng dependencies
+        run: npm audit --omit=dev --audit-level=high
 
   frontend:
+    name: Frontend (lint, test, build, audit)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
@@ -34,8 +55,19 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
-      - run: npm audit --omit=dev
+      - name: Cài dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Chạy test
+        run: npm test
+      - name: Type check và build
+        run: npm run build
+      - name: Lưu bản build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+      - name: Kiểm tra lỗ hổng dependencies
+        run: npm audit --omit=dev --audit-level=high

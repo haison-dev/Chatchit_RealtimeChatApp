@@ -371,3 +371,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Gentle floating motion for decorative chips and bubbles (auth pages). */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-slow { animation: float-y 6s ease-in-out infinite; }
+.float-slower { animation: float-y 8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .float-slow, .float-slower { animation: none; }
+}

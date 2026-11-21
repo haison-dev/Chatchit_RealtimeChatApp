@@ -8,18 +8,6 @@ export const useFriendStore = create<FriendState>((set) => ({
   receivedList: [],
   sentList: [],
 
-  searchByUsername: async (username) => {
-    set({ loading: true });
-    try {
-      return await friendService.searchByUserName(username);
-    } catch (error) {
-      console.error("Unable to find user by username", error);
-      return null;
-    } finally {
-      set({ loading: false });
-    }
-  },
-
   addFriend: async (to, message) => {
     set({ loading: true });
     try {
@@ -90,6 +78,15 @@ export const useFriendStore = create<FriendState>((set) => ({
   resolveRequest: (requestId) => set((state) => ({
     receivedList: state.receivedList.filter((item) => item._id !== requestId),
     sentList: state.sentList.filter((item) => item._id !== requestId),
+  })),
+
+  removeFriend: async (friendId) => {
+    await friendService.removeFriend(friendId);
+    set((state) => ({ friends: state.friends.filter((friend) => friend._id !== friendId) }));
+  },
+
+  dropFriend: (friendId) => set((state) => ({
+    friends: state.friends.filter((friend) => friend._id !== friendId),
   })),
 
   receiveFriend: (friend) => set((state) => ({

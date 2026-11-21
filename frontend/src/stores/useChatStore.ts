@@ -11,6 +11,8 @@ const createClientMessageId = () =>
   globalThis.crypto?.randomUUID?.() ??
   `message-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+const inFlightMessageRequests = new Set<string>();
+
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -56,6 +58,11 @@ export const useChatStore = create<ChatState>()(
 
         if (nextCursor === null) return;
 
+        // Infinite scroll can fire again before the previous page arrives.
+        const requestKey = `${convoId}:${nextCursor}`;
+        if (inFlightMessageRequests.has(requestKey)) return;
+        inFlightMessageRequests.add(requestKey);
+
         set({ messageLoading: true });
 
         try {
@@ -88,7 +95,8 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           console.error("Lỗi xảy ra khi fetchMessages:", error);
         } finally {
-          set({ messageLoading: false });
+          inFlightMessageRequests.delete(requestKey);
+          set({ messageLoading: inFlightMessageRequests.size > 0 });
         }
       },
       sendDirectMessage: async (recipientId, content, imgUrl) => {
@@ -429,6 +437,24 @@ export const useChatStore = create<ChatState>()(
           set({ loading: false });
         }
       },
+      openDirectChat: async (userId) => {
+        const existing = get().conversations.find(
+          (c) => c.type === "direct" && c.participants.some((p) => p._id === userId),
+        );
+        let conversationId = existing?._id;
+
+        if (!conversationId) {
+          const conversation = await chatService.createConversation("direct", "", [userId]);
+          get().addConvo(conversation);
+          useSocketStore.getState().socket?.emit("join-conversation", conversation._id);
+          conversationId = conversation._id as string;
+        }
+
+        get().setActiveConversation(conversationId);
+        if (!get().messages[conversationId]) {
+          await get().fetchMessages(conversationId);
+        }
+      },
       renameGroup: async (conversationId, name) => {
         const conversation = await chatService.renameGroup(conversationId, name);
         get().updateConversation(conversation);
@@ -444,6 +470,10 @@ export const useChatStore = create<ChatState>()(
       updateGroupAdmin: async (conversationId, memberId, isAdmin) => {
         const conversation = await chatService.updateGroupAdmin(conversationId, memberId, isAdmin);
         get().updateConversation(conversation);
+      },
+      deleteConversation: async (conversationId) => {
+        await chatService.deleteConversation(conversationId);
+        get().removeConversation(conversationId);
       },
       leaveGroup: async (conversationId) => {
         await chatService.leaveGroup(conversationId);

@@ -3,6 +3,7 @@ import Message from "../models/Message.js";
 import { emitNewMessage, updateConversationAfterCreateMessage } from "../utils/messageHelper.js";
 import {io} from "../socket/index.js";
 import mongoose from "mongoose";
+import { MESSAGE_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
 
 const isValidClientMessageId = (value) =>
     typeof value === "string" && value.trim().length >= 8 && value.trim().length <= 100;
@@ -28,10 +29,13 @@ export const sendDirectMessage = async (req, res) => {
 
         let conversation;
 
-        const normalizedContent = typeof content === "string" ? content.trim() : "";
+        const normalizedContent = sanitizeText(content, { multiline: true });
         const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
-        if ((!normalizedContent && !normalizedImage) || normalizedContent.length > 4000) {
+        if (!normalizedContent && !normalizedImage) {
             return res.status(400).json({ message: "A message requires text or an image." });
+        }
+        if (normalizedContent.length > MESSAGE_MAX_LENGTH) {
+            return res.status(400).json({ message: `Message must not exceed ${MESSAGE_MAX_LENGTH} characters.` });
         }
         if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
             return res.status(400).json({ message: "Image URL is not valid." });
@@ -50,6 +54,9 @@ export const sendDirectMessage = async (req, res) => {
         }
 
         if (conversationId) {
+            if (!mongoose.isValidObjectId(conversationId)) {
+                return res.status(400).json({ message: "A valid conversation ID is required." });
+            }
             conversation = await Conversation.findOne({
                 _id: conversationId,
                 type: "direct",
@@ -108,10 +115,13 @@ export const sendGroupMessage = async (req, res) => {
         const senderId = req.user._id;
         const conversation = req.conversation;
 
-        const normalizedContent = typeof content === "string" ? content.trim() : "";
+        const normalizedContent = sanitizeText(content, { multiline: true });
         const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
-        if ((!normalizedContent && !normalizedImage) || normalizedContent.length > 4000) {
+        if (!normalizedContent && !normalizedImage) {
             return res.status(400).json({ message: "A message requires text or an image." });
+        }
+        if (normalizedContent.length > MESSAGE_MAX_LENGTH) {
+            return res.status(400).json({ message: `Message must not exceed ${MESSAGE_MAX_LENGTH} characters.` });
         }
         if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
             return res.status(400).json({ message: "Image URL is not valid." });

@@ -15,6 +15,8 @@ export default defineConfig({
           if (id.includes("radix-ui") || id.includes("@radix-ui")) return "radix-ui"
           if (id.includes("react-dom") || id.includes("react-router")) return "react-vendor"
           if (id.includes("socket.io-client")) return "socket-client"
+          // only loaded by the sign-in page, on wide screens
+          if (id.includes("node_modules/three")) return "three"
         },
       },
     },

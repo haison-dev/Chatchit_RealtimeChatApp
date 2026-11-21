@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import { io } from "../socket/index.js";
+import { withClearedAtFilter } from "../utils/conversationHelper.js";
+import { MESSAGE_MAX_LENGTH, SEARCH_QUERY_MAX_LENGTH, SEARCH_QUERY_MIN_LENGTH, escapeRegex, sanitizeText } from "../utils/sanitize.js";
 
 const loadAuthorizedMessage = async (messageId, userId) => {
   if (!mongoose.isValidObjectId(messageId)) return { error: 400 };
@@ -32,9 +34,9 @@ export const updateMessage = async (req, res) => {
       return res.status(403).json({ message: "You can only edit your own messages." });
     }
     if (message.deletedAt) return res.status(409).json({ message: "Deleted messages cannot be edited." });
-    const content = typeof req.body?.content === "string" ? req.body.content.trim() : "";
-    if (!content || content.length > 4000) {
-      return res.status(400).json({ message: "Message content must be between 1 and 4000 characters." });
+    const content = sanitizeText(req.body?.content, { multiline: true });
+    if (!content || content.length > MESSAGE_MAX_LENGTH) {
+      return res.status(400).json({ message: `Message content must be between 1 and ${MESSAGE_MAX_LENGTH} characters.` });
     }
 
     message.content = content;
@@ -107,16 +109,16 @@ export const toggleReaction = async (req, res) => {
 
 export const searchMessages = async (req, res) => {
   try {
-    const query = typeof req.query?.q === "string" ? req.query.q.trim() : "";
-    if (query.length < 2 || query.length > 100) {
+    const query = sanitizeText(req.query?.q);
+    if (query.length < SEARCH_QUERY_MIN_LENGTH || query.length > SEARCH_QUERY_MAX_LENGTH) {
       return res.status(400).json({ message: "Search query must be between 2 and 100 characters." });
     }
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const messages = await Message.find({
+    const escaped = escapeRegex(query);
+    const messages = await Message.find(withClearedAtFilter({
       conversationId: req.params.conversationId,
       deletedAt: null,
       content: { $regex: escaped, $options: "i" },
-    }).sort({ createdAt: -1 }).limit(50);
+    }, req.conversation, req.user._id)).sort({ createdAt: -1 }).limit(50).lean();
     return res.status(200).json({ messages });
   } catch (error) {
     console.error("Error searching messages:", error);
