@@ -7,6 +7,8 @@ import { PERSON_NAME_MAX_LENGTH, sanitizeText } from '../utils/sanitize.js';
 
 const ACCESS_TOKEN_TTL = '30m';
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; // 14 days
+// How long a just-rotated refresh token is still accepted (see refreshToken).
+export const REFRESH_REUSE_GRACE_MS = 15 * 1000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
 
@@ -19,6 +21,14 @@ const refreshCookieOptions = () => ({
 
 const hashToken = (token) =>
     crypto.createHash('sha256').update(token).digest('hex');
+
+// A session whose token was rotated moments ago: the caller raced another refresh
+// request and simply holds the previous token, which is not a replay attack.
+const findRecentlyRotatedSession = (tokenHash) =>
+    Session.findOne({
+        previousRefreshToken: tokenHash,
+        rotatedAt: { $gte: new Date(Date.now() - REFRESH_REUSE_GRACE_MS) },
+    });
 
 const createAccessToken = (userId) =>
     jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
@@ -174,9 +184,15 @@ export const refreshToken = async (req, res) => {
             return res.status(401).json({ message: "Token is not available" });
         }
         //compare refresh token in db
-        const session = await Session.findOne({ refreshToken: hashToken(token) });
+        const tokenHash = hashToken(token);
+        const session = await Session.findOne({ refreshToken: tokenHash });
 
         if (!session) {
+            const rotated = await findRecentlyRotatedSession(tokenHash);
+            if (rotated) {
+                // The browser already received the new cookie from the winning request.
+                return res.status(200).json({ accessToken: createAccessToken(rotated.userId) });
+            }
             return res.status(403).json({ message: "Invalid token or expire" })
         }
 
@@ -191,12 +207,17 @@ export const refreshToken = async (req, res) => {
         const nextTokenHash = hashToken(nextRefreshToken);
         const nextExpiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL);
         const rotatedSession = await Session.findOneAndUpdate(
-            { _id: session._id, refreshToken: hashToken(token) },
-            { $set: { refreshToken: nextTokenHash, expiresAt: nextExpiresAt } },
+            { _id: session._id, refreshToken: tokenHash },
+            { $set: { refreshToken: nextTokenHash, expiresAt: nextExpiresAt, previousRefreshToken: tokenHash, rotatedAt: new Date() } },
             { new: true },
         );
 
         if (!rotatedSession) {
+            // Lost a race with a parallel refresh that rotated the token first.
+            const rotated = await findRecentlyRotatedSession(tokenHash);
+            if (rotated) {
+                return res.status(200).json({ accessToken: createAccessToken(rotated.userId) });
+            }
             res.clearCookie('refreshToken', refreshCookieOptions());
             return res.status(403).json({ message: "Refresh token has already been used" });
         }

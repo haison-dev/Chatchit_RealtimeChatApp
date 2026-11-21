@@ -1,4 +1,4 @@
-import api from '@/lib/axios';
+import api, { refreshAccessToken } from '@/lib/axios';
 
 export const authService = {
     signUp: async (username: string, password: string, email: string, firstName: string, lastName: string) => {
@@ -29,8 +29,5 @@ export const authService = {
         return res.data.user;
     },
 
-    refresh: async () =>{
-        const res = await api.post("/auth/refresh");
-        return res.data.accessToken;
-    }
+    refresh: () => refreshAccessToken(),
 };

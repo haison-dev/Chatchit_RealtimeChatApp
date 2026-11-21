@@ -1,6 +1,8 @@
 import { create } from "zustand";
+import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
 import type { AuthState } from "@/types/store";
 import { persist } from "zustand/middleware";
 import { useChatStore } from "./useChatStore";
@@ -100,6 +102,16 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      updateProfile: async (input) => {
+        const previous = get().user;
+        const user = await userService.updateMe(input);
+        set({ user });
+        // Names and avatars are copied into the conversation list, so reload it.
+        if (previous && (previous.displayName !== user.displayName || previous.avatarUrl !== user.avatarUrl)) {
+          void useChatStore.getState().fetchConversations();
+        }
+      },
+
       refresh: async () => {
         try {
           set({ loading: true });
@@ -113,8 +125,15 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           console.error(error);
-          toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
-          get().clearState();
+          // Only a rejection from the server means the session is really gone.
+          // A network error or a restarting server must not sign the user out.
+          const rejected = isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403);
+          if (rejected) {
+            toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+            get().clearState();
+          } else {
+            toast.error("Không thể kết nối tới máy chủ. Vui lòng tải lại trang.");
+          }
         } finally {
           set({ loading: false });
         }

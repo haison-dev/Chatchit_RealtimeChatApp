@@ -17,6 +17,29 @@ export const GROUP_NAME_MAX_LENGTH = 80;
 export const PERSON_NAME_MAX_LENGTH = 50;
 export const FRIEND_REQUEST_MESSAGE_MAX_LENGTH = 300;
 export const SEARCH_QUERY_MAX_LENGTH = 100;
+export const SEARCH_QUERY_MIN_LENGTH = 2;
+export const DISPLAY_NAME_MAX_LENGTH = PERSON_NAME_MAX_LENGTH * 2 + 1;
+export const BIO_MAX_LENGTH = 500;
+export const AVATAR_URL_MAX_LENGTH = 500;
+export const PHONE_PATTERN = /^\+?[0-9 ()-]{6,20}$/;
+
+/** Returns a normalized https URL string, or null when the value is not an acceptable avatar URL. */
+export const sanitizeAvatarUrl = (value) => {
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  if (!text || text.length > AVATAR_URL_MAX_LENGTH) return null;
+  try {
+    const url = new URL(text);
+    // https only: blocks javascript:/data: URLs and mixed-content images.
+    if (url.protocol !== "https:" || url.username || url.password) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+};
+
+/** Escapes user input so it can be placed inside a RegExp literally. */
+export const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Returns a cleaned string, or "" when the value is not a string.

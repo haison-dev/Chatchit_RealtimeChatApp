@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { io } from "../socket/index.js";
 import { formatConversation } from "../utils/formatConversation.js";
 import { GROUP_NAME_MAX_LENGTH, sanitizeText } from "../utils/sanitize.js";
+import { friendPair } from "../utils/friendHelper.js";
 
 export const createConversation = async (req, res) => {
   try {
@@ -253,8 +254,6 @@ const formatAndBroadcastGroup = async (conversation, userIds = []) => {
   return formatted;
 };
 
-const friendshipPair = (first, second) => first < second ? [first, second] : [second, first];
-
 export const renameGroup = async (req, res) => {
   try {
     const name = sanitizeText(req.body?.name);
@@ -290,7 +289,7 @@ export const addGroupMembers = async (req, res) => {
     }
 
     const adminId = req.user._id.toString();
-    const friendPairs = uniqueIds.map((id) => friendshipPair(adminId, id));
+    const friendPairs = uniqueIds.map((id) => friendPair(adminId, id));
     const [users, friendships] = await Promise.all([
       User.countDocuments({ _id: { $in: uniqueIds } }),
       Friend.countDocuments({ $or: friendPairs.map(([userA, userB]) => ({ userA, userB })) }),

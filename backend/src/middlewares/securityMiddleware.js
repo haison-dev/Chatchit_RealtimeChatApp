@@ -56,3 +56,15 @@ export const searchLimiter = createUserLimiter({
   limit: 30,
   message: "Too many searches. Please wait a moment.",
 });
+
+export const profileLimiter = createUserLimiter({
+  windowMs: 60 * 1000,
+  limit: 60,
+  message: "Too many profile requests. Please wait a moment.",
+});
+
+export const profileUpdateLimiter = createUserLimiter({
+  windowMs: 10 * 60 * 1000,
+  limit: 20,
+  message: "Too many profile updates. Please try again later.",
+});

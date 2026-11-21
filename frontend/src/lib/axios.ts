@@ -8,6 +8,21 @@ const api = axios.create({
 
 let refreshPromise: Promise<string> | null = null;
 
+/**
+ * Requests a new access token. Every caller (route guard, socket reconnect, the
+ * 403 interceptor, the store) shares one in-flight request, because the server
+ * rotates the refresh token and a second parallel call would be rejected.
+ */
+export const refreshAccessToken = (): Promise<string> => {
+  refreshPromise ??= api
+    .post("/auth/refresh")
+    .then((res) => res.data.accessToken as string)
+    .finally(() => {
+      refreshPromise = null;
+    });
+  return refreshPromise;
+};
+
 // add access token to request headers if available
 api.interceptors.request.use((config) => {
   const { accessToken } = useAuthStore.getState();
@@ -35,14 +50,7 @@ api.interceptors.response.use(
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        refreshPromise ??= api
-          .post("/auth/refresh")
-          .then((res) => res.data.accessToken as string)
-          .finally(() => {
-            refreshPromise = null;
-          });
-
-        const newAccessToken = await refreshPromise;
+        const newAccessToken = await refreshAccessToken();
 
         useAuthStore.getState().setAccessToken(newAccessToken);
 
