@@ -33,22 +33,6 @@ export const authMe = async (req, res) => {
     }
 }
 
-export const searchUserByUsername = async (req, res) =>{
-    try {
-        const { username } = req.query;
-        if (typeof username !== 'string' || username.trim() === '' || username.length > 30) {
-            return res.status(400).json({ message: "Username query parameter is required." });
-        }
-
-        const user = await User.findOne({username: username.trim().toLowerCase()}).select('_id displayName username avatarUrl');
-
-        return res.status(200).json({ user });
-    } catch (error) {
-        console.error('Error when calling searchUserByUsername.', error);
-        return res.status(500).json({ message: "Internal server error" });
-    }
-}
-
 // PATCH /users/me. Only the fields that are present in the body are changed;
 // an empty string clears bio, phone and avatar.
 export const updateMe = async (req, res) => {
