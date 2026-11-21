@@ -7,7 +7,7 @@ import {
     PHONE_PATTERN,
     SEARCH_QUERY_MAX_LENGTH,
     SEARCH_QUERY_MIN_LENGTH,
-    escapeRegex,
+    buildNameSearchPattern,
     sanitizeAvatarUrl,
     sanitizeText,
 } from '../utils/sanitize.js';
@@ -119,7 +119,9 @@ export const updateMe = async (req, res) => {
     }
 };
 
-// GET /users?q=... : search by display name (contains) or by exact email.
+// GET /users?q=... : search by display name (contains, ignoring case and Vietnamese diacritics)
+// or by exact email, among friends and strangers alike. Friends are queried separately so they
+// are always listed first and are never pushed out by strangers with a similar name.
 // Email is matched exactly so the endpoint cannot be used to enumerate addresses.
 export const searchUsers = async (req, res) => {
     try {
@@ -130,19 +132,24 @@ export const searchUsers = async (req, res) => {
             });
         }
 
-        const conditions = [{ displayName: { $regex: escapeRegex(query), $options: 'i' } }];
+        const conditions = [{ displayName: { $regex: buildNameSearchPattern(query), $options: 'i' } }];
         if (EMAIL_PATTERN.test(query)) {
             conditions.push({ email: query.toLowerCase() });
         }
 
-        const users = await User.find({ _id: { $ne: req.user._id }, $or: conditions })
+        const viewerFriendIds = await getFriendIds(req.user._id);
+        const findMatches = (idFilter) => User.find({ $or: conditions, _id: idFilter })
             .select(PUBLIC_USER_FIELDS)
             .sort({ displayName: 1 })
             .limit(SEARCH_RESULT_LIMIT)
             .lean();
+        const [friendMatches, otherMatches] = await Promise.all([
+            findMatches({ $in: viewerFriendIds }),
+            findMatches({ $nin: [...viewerFriendIds, req.user._id] }),
+        ]);
+        const users = [...friendMatches, ...otherMatches];
 
         const ids = users.map((user) => user._id.toString());
-        const viewerFriendIds = await getFriendIds(req.user._id);
         const [mutual, relationships] = await Promise.all([
             getMutualFriends(req.user._id, ids, { limit: 3, viewerFriendIds }),
             getRelationships(req.user._id, ids, { viewerFriendIds }),
