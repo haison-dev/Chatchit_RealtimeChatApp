@@ -107,4 +107,8 @@ export interface FriendState {
   receiveRequest: (request: FriendRequest) => void;
   resolveRequest: (requestId: string) => void;
   receiveFriend: (friend: Friend) => void;
+  /** Unfriends on the server, then removes the friend from the list. */
+  removeFriend: (friendId: string) => Promise<void>;
+  /** Removes a friend from the list only (the friendship was already ended). */
+  dropFriend: (friendId: string) => void;
 }
