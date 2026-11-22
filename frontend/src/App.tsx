@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { Toaster } from 'sonner';
 import { lazy, Suspense, useEffect } from 'react';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import InstallAppBanner from './components/pwa/InstallAppBanner';
 import FullPageLoader from './components/FullPageLoader';
 import { useThemeStore } from './stores/useThemeStore';
 import { useAuthStore } from './stores/useAuthStore';
@@ -34,6 +35,7 @@ function App() {
   return (
     <>
       <Toaster richColors closeButton position="top-right" />
+      <InstallAppBanner />
       <BrowserRouter>
         <Suspense fallback={<FullPageLoader />}>
           <Routes>
