@@ -1,4 +1,5 @@
-import { ChevronsUpDown, UserIcon } from "lucide-react";
+import { ChevronsUpDown, Download, UserIcon } from "lucide-react";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -23,6 +24,7 @@ import { profilePath } from "@/lib/routes";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
+  const { status: installStatus, install } = useInstallPrompt();
 
   return (
     <SidebarMenu>
@@ -77,6 +79,12 @@ export function NavUser({ user }: { user: User }) {
                   Hồ sơ của tôi
                 </Link>
               </DropdownMenuItem>
+              {installStatus === "available" && (
+                <DropdownMenuItem className="cursor-pointer" onSelect={() => void install()}>
+                  <Download className="text-muted-foreground" />
+                  Cài đặt ứng dụng
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
