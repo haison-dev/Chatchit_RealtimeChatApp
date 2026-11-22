@@ -6,8 +6,10 @@ import ChatWindowHeader from "./ChatWindowHeader";
 import ChatWindowBody from "./ChatWindowBody";
 import MessageInput from "./MessageInput";
 import { useEffect } from "react";
+import { usePageMeta } from "@/hooks/use-page-meta";
 
 const ChatWindowLayout = () => {
+  usePageMeta();
   const selectedConvo = useChatStore((state) =>
     state.conversations.find((c) => c._id === state.activeConversationId) ?? null,
   );

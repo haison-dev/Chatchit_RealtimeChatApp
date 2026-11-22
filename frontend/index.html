@@ -6,12 +6,29 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#7c3aed" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="description" content="Chatchit - nhắn tin thời gian thực, nhanh như một tiếng ting." />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chatchit - Nhắn tin thời gian thực</title>
+    <meta name="description" content="Chatchit là ứng dụng nhắn tin thời gian thực: trò chuyện với bạn bè và nhóm, gửi ảnh, gọi thoại và gọi video ngay trên trình duyệt." />
+    <meta name="application-name" content="Chatchit" />
+
+    <!-- Link previews (Facebook, Zalo, Messenger, X...). They do not run scripts, so these stay static.
+         The tags that need the site address (og:url, og:image, structured data) are added at build time from VITE_SITE_URL. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Chatchit" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:title" content="Chatchit - Nhắn tin thời gian thực" />
+    <meta property="og:description" content="Nhắn tin, gọi thoại và gọi video với bạn bè ngay trên trình duyệt. Nhanh như một tiếng ting." />
+    <meta property="og:image:alt" content="Chatchit - nhắn tin thời gian thực" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chatchit - Nhắn tin thời gian thực" />
+    <meta name="twitter:description" content="Nhắn tin, gọi thoại và gọi video với bạn bè ngay trên trình duyệt. Nhanh như một tiếng ting." />
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>Chatchit - Nhắn tin thời gian thực</h1>
+      <p>Chatchit là ứng dụng nhắn tin thời gian thực: trò chuyện với bạn bè và nhóm, gửi ảnh, gọi thoại và gọi video. Vui lòng bật JavaScript để sử dụng.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

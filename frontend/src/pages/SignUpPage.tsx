@@ -2,6 +2,7 @@ import { Link } from "react-router"
 import { MessagesSquare, ShieldCheck, Users, Zap } from "lucide-react"
 import { SignupForm } from "@/components/auth/signup-form"
 import Logo from "@/components/brand/Logo"
+import { usePageMeta } from "@/hooks/use-page-meta"
 
 const benefits = [
   { icon: Zap, title: "Nhắn tin tức thì", text: "Tin nhắn đến ngay, kèm tiếng ting quen thuộc." },
@@ -12,6 +13,12 @@ const benefits = [
 // Sign-up page: brand panel on the left, the form on a clean card on the right.
 // It follows the app theme (light or dark); the sign-in page has its own look.
 const SignUpPage = () => {
+  usePageMeta({
+    title: "Đăng ký",
+    description: "Tạo tài khoản Chatchit miễn phí để kết bạn, tạo nhóm chat, gọi thoại và gọi video.",
+    path: "/signup",
+  })
+
   return (
     <div className="relative min-h-svh overflow-hidden bg-background">
       {/* soft background glow */}
