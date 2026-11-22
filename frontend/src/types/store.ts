@@ -1,4 +1,5 @@
 import type { Socket } from "socket.io-client";
+import type { CallEndReason, CallKind, CallPeer, CallPhase, CallRole, CallSignal, IncomingCallPayload } from "./call";
 import type { Conversation, Message, TypingUser } from "./chat";
 import type { Friend, FriendRequest, UpdateProfileInput, User } from "./user";
 
@@ -112,4 +113,30 @@ export interface FriendState {
   removeFriend: (friendId: string) => Promise<void>;
   /** Removes a friend from the list only (the friendship was already ended). */
   dropFriend: (friendId: string) => void;
+}
+
+export interface CallState {
+  phase: CallPhase;
+  callId: string | null;
+  kind: CallKind | null;
+  role: CallRole | null;
+  peer: CallPeer | null;
+  muted: boolean;
+  cameraOff: boolean;
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  /** Epoch ms when the media connected; null until then. */
+  startedAt: number | null;
+  startCall: (peer: CallPeer, kind: CallKind) => Promise<void>;
+  acceptCall: () => Promise<void>;
+  /** Cancel, reject or hang up depending on where the call is. */
+  endCall: () => void;
+  toggleMute: () => void;
+  toggleCamera: () => void;
+  // Fed by useSocketStore.
+  handleIncoming: (payload: IncomingCallPayload) => void;
+  handleAccepted: (payload: { callId: string }) => Promise<void>;
+  handleSignal: (signal: CallSignal) => Promise<void>;
+  handleEnded: (payload: { callId: string; reason: CallEndReason }) => void;
+  handleSocketLost: () => void;
 }

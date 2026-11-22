@@ -4,6 +4,8 @@ import express from "express";
 import { socketAuthMiddleware } from "../middlewares/socketMiddleware.js";
 import { getUserConversationsForSokectIO } from "../controllers/conversationController.js";
 import { authorizeConversationJoin } from "./authorizeConversationJoin.js";
+import { createCallHandlers } from "./callHandlers.js";
+import { createEventLimiter } from "./eventLimiter.js";
 
 const app = express();
 
@@ -20,6 +22,8 @@ const io = new Server(server, {
 
 io.use(socketAuthMiddleware);
 
+const registerCallHandlers = createCallHandlers(io);
+
 const onlineUsers = new Map(); // { userId: Set<socketId> }
 
 const broadcastOnlineUsers = () => {
@@ -27,20 +31,6 @@ const broadcastOnlineUsers = () => {
 };
 
 const isConversationId = (value) => typeof value === "string" && /^[a-f\d]{24}$/i.test(value);
-
-// Simple per-socket token bucket so a client cannot flood rooms with events.
-const createEventLimiter = (capacity, refillPerSecond) => {
-  let tokens = capacity;
-  let last = Date.now();
-  return () => {
-    const now = Date.now();
-    tokens = Math.min(capacity, tokens + ((now - last) / 1000) * refillPerSecond);
-    last = now;
-    if (tokens < 1) return false;
-    tokens -= 1;
-    return true;
-  };
-};
 
 io.on("connection", async (socket) => {
   const user = socket.user;
@@ -103,6 +93,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.join(userId);
+  registerCallHandlers(socket, allowEvent);
 
   socket.on("disconnecting", () => {
     socket.rooms.forEach((roomId) => {

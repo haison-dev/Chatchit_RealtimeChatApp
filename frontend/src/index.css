@@ -33,9 +33,9 @@
     --muted: 260 30% 95%;
     --muted-foreground: 240 15% 50%;
 
-    /* Accent - cyan */
-    --accent: 180 100% 75%;
-    --accent-foreground: 240 100% 15%;
+    /* Accent - xám nhạt (hover, focus, skeleton) */
+    --accent: 240 5% 94%;
+    --accent-foreground: 240 6% 12%;
 
     /* Chat colors */
     --chat-bubble-sent: 271 79% 47%;
@@ -145,8 +145,8 @@
     --muted: 240 15% 15%;
     --muted-foreground: 240 15% 70%;
 
-    --accent: 180 100% 60%;
-    --accent-foreground: 240 15% 8%;
+    --accent: 240 4% 24%;
+    --accent-foreground: 0 0% 96%;
 
     /* Chat bubbles in dark mode */
     --chat-bubble-sent: 280 100% 65%;

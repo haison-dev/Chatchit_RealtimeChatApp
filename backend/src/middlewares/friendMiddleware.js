@@ -1,7 +1,6 @@
 import Conversation from "../models/Conversation.js";
-import Friend from "../models/Friend.js";
 import mongoose from "mongoose";
-import { friendPair } from "../utils/friendHelper.js";
+import { areFriends } from "../utils/friendHelper.js";
 
 export const checkFriendship = async (req, res, next) => {
   try {
@@ -18,14 +17,7 @@ export const checkFriendship = async (req, res, next) => {
         return res.status(400).json({ message: "A valid recipient ID is required." });
       }
 
-      const [userA, userB] = friendPair(me, recipientId);
-
-      const isFriend = await Friend.findOne({
-        userA,
-        userB,
-      });
-
-      if (!isFriend) {
+      if (!(await areFriends(me, recipientId))) {
         return res.status(403).json({ message: "You can only send messages to your friends." });
       }
 
@@ -37,9 +29,7 @@ export const checkFriendship = async (req, res, next) => {
     }
 
     const friendChecks = memberIds.map(async (memberId) => {
-      const [userA, userB] = friendPair(me, memberId);
-      const friend = await Friend.findOne({ userA, userB });
-      return friend ? null : memberId;
+      return (await areFriends(me, memberId)) ? null : memberId;
     });
 
     const results = await Promise.all(friendChecks);

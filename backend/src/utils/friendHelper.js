@@ -10,6 +10,12 @@ export const friendPair = (first, second) => {
   return a < b ? [a, b] : [b, a];
 };
 
+/** True when the two users are friends. */
+export const areFriends = async (first, second) => {
+  const [userA, userB] = friendPair(first, second);
+  return Boolean(await Friend.findOne({ userA, userB }));
+};
+
 export const PUBLIC_USER_FIELDS = "_id displayName username avatarUrl";
 
 const otherSide = (friendship, userId) =>
