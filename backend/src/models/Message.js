@@ -1,4 +1,12 @@
 import mongoose from "mongoose";
+import { CALL_KINDS, CALL_STATUSES } from "../utils/callOutcome.js";
+
+// Set only on the record a finished 1-1 call leaves in the conversation.
+const callSchema = new mongoose.Schema({
+  kind: { type: String, enum: CALL_KINDS, required: true },
+  status: { type: String, enum: CALL_STATUSES, required: true },
+  duration: { type: Number, min: 0, default: 0 }, // seconds the call was connected
+}, { _id: false });
 
 const messageSchema = new mongoose.Schema(
   {
@@ -20,6 +28,7 @@ const messageSchema = new mongoose.Schema(
     },
     content: { type: String, trim: true },
     imgUrl: { type: String },
+    call: { type: callSchema, default: undefined },
     editedAt: { type: Date, default: null },
     deletedAt: { type: Date, default: null },
     reactions: [{

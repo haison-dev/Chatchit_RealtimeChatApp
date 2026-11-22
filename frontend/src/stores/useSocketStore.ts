@@ -4,6 +4,7 @@ import { useAuthStore } from "./useAuthStore";
 import type { SocketState } from "@/types/store";
 import { useChatStore } from "./useChatStore";
 import { useFriendStore } from "./useFriendStore";
+import { useCallStore } from "./useCallStore";
 import { toast } from "sonner";
 
 const baseUrl = import.meta.env.VITE_SOCKET_URL;
@@ -23,7 +24,8 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       auth: { token: accessToken },
       transports: ["websocket"],
       reconnection: true,
-      reconnectionAttempts: 10,
+      // Never give up: a sleeping free host can need a minute or more to wake up.
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 500,
       reconnectionDelayMax: 5000,
     });
@@ -65,6 +67,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     });
 
     socket.on("disconnect", () => {
+      useCallStore.getState().handleSocketLost();
       set({ isConnected: false, typingUsers: {} });
     });
 
@@ -161,6 +164,12 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       toast.info("Lời mời kết bạn đã được từ chối.");
     });
 
+    // 1-1 calls (WebRTC signaling); the logic lives in useCallStore
+    socket.on("call:incoming", (payload) => useCallStore.getState().handleIncoming(payload));
+    socket.on("call:accepted", (payload) => void useCallStore.getState().handleAccepted(payload));
+    socket.on("call:signal", (signal) => void useCallStore.getState().handleSignal(signal));
+    socket.on("call:ended", (payload) => useCallStore.getState().handleEnded(payload));
+
     socket.on("typing-start", ({ conversationId, user }) => {
       set((state) => {
         const current = state.typingUsers[conversationId] ?? [];
@@ -187,6 +196,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
   },
   disconnectSocket: () => {
+    useCallStore.getState().endCall();
     const socket = get().socket;
     if (socket) {
       socket.disconnect();
