@@ -24,7 +24,8 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       auth: { token: accessToken },
       transports: ["websocket"],
       reconnection: true,
-      reconnectionAttempts: 10,
+      // Never give up: a sleeping free host can need a minute or more to wake up.
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 500,
       reconnectionDelayMax: 5000,
     });
