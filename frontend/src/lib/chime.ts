@@ -48,6 +48,10 @@ export const unlockAudio = async (): Promise<boolean> => {
   return audio.state === "running";
 };
 
+/** The shared audio context once it was unlocked by a gesture and is running, otherwise null. */
+export const getRunningAudioContext = (): AudioContext | null =>
+  context && context.state === "running" ? context : null;
+
 // E6 and B5: a bright and a slightly lower bell, so the two people sound different.
 const BASE_FREQUENCY = { high: 1318.5, low: 987.8 } as const;
 

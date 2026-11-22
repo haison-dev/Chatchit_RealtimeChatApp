@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from "lucide-react";
+import { useCallSounds } from "@/hooks/use-call-sounds";
 import { formatCallDuration } from "@/lib/call";
 import { cn } from "@/lib/utils";
 import { useCallStore } from "@/stores/useCallStore";
@@ -138,6 +139,7 @@ const ActiveCall = () => {
 
 /** Mounted once for the whole signed-in app: shows an incoming call or the call in progress. */
 const CallOverlay = () => {
+  useCallSounds();
   const phase = useCallStore((state) => state.phase);
   if (phase === "idle") return null;
   return phase === "incoming" ? <IncomingCall /> : <ActiveCall />;
