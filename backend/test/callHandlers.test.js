@@ -51,7 +51,7 @@ const events = (io, name) => io.emitted.filter((entry) => entry.event === name);
 test("invite is refused for strangers, offline friends and invalid input", async () => {
   await withFriends([[ALICE, BOB]], async () => {
     const io = createFakeIo();
-    const register = createCallHandlers(io);
+    const register = createCallHandlers(io, { recordCall: async () => null });
     const alice = createFakeSocket(io, "s-alice", ALICE, register);
 
     assert.deepEqual(await invite(alice, { calleeId: "x", kind: "audio" }), { ok: false, reason: "invalid" });
@@ -67,7 +67,7 @@ test("invite is refused for strangers, offline friends and invalid input", async
 test("full call: ring, accept, relay signaling, hang up", async () => {
   await withFriends([[ALICE, BOB]], async () => {
     const io = createFakeIo();
-    const register = createCallHandlers(io);
+    const register = createCallHandlers(io, { recordCall: async () => null });
     const alice = createFakeSocket(io, "s-alice", ALICE, register);
     const bob = createFakeSocket(io, "s-bob", BOB, register);
 
@@ -103,7 +103,7 @@ test("full call: ring, accept, relay signaling, hang up", async () => {
 test("a busy user is refused and strangers cannot touch someone else's call", async () => {
   await withFriends([[ALICE, BOB], [ALICE, CAROL]], async () => {
     const io = createFakeIo();
-    const register = createCallHandlers(io);
+    const register = createCallHandlers(io, { recordCall: async () => null });
     const alice = createFakeSocket(io, "s-alice", ALICE, register);
     createFakeSocket(io, "s-bob", BOB, register);
     const carol = createFakeSocket(io, "s-carol", CAROL, register);
@@ -120,7 +120,7 @@ test("a busy user is refused and strangers cannot touch someone else's call", as
 test("every device of the callee stops ringing when one answers", async () => {
   await withFriends([[ALICE, BOB]], async () => {
     const io = createFakeIo();
-    const register = createCallHandlers(io);
+    const register = createCallHandlers(io, { recordCall: async () => null });
     const alice = createFakeSocket(io, "s-alice", ALICE, register);
     const bobPhone = createFakeSocket(io, "s-bob-phone", BOB, register);
     createFakeSocket(io, "s-bob-laptop", BOB, register);
@@ -136,7 +136,7 @@ test("every device of the callee stops ringing when one answers", async () => {
 test("disconnecting the caller ends the call for the callee", async () => {
   await withFriends([[ALICE, BOB]], async () => {
     const io = createFakeIo();
-    const register = createCallHandlers(io);
+    const register = createCallHandlers(io, { recordCall: async () => null });
     const alice = createFakeSocket(io, "s-alice", ALICE, register);
     createFakeSocket(io, "s-bob", BOB, register);
 

@@ -21,6 +21,8 @@ const respondLoadError = (res, error) => res.status(error).json({
   message: error === 400 ? "A valid message ID is required." : "Message not found.",
 });
 
+const CALL_RECORD_LOCKED = { message: "Call records cannot be changed." };
+
 const emitMessageUpdate = (message) => {
   io.to(message.conversationId.toString()).emit("message-updated", message);
 };
@@ -33,6 +35,7 @@ export const updateMessage = async (req, res) => {
     if (message.senderId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "You can only edit your own messages." });
     }
+    if (message.call) return res.status(409).json(CALL_RECORD_LOCKED);
     if (message.deletedAt) return res.status(409).json({ message: "Deleted messages cannot be edited." });
     const content = sanitizeText(req.body?.content, { multiline: true });
     if (!content || content.length > MESSAGE_MAX_LENGTH) {
@@ -59,6 +62,7 @@ export const deleteMessage = async (req, res) => {
     const loaded = await loadAuthorizedMessage(req.params.messageId, req.user._id);
     if (loaded.error) return respondLoadError(res, loaded.error);
     const { message, conversation } = loaded;
+    if (message.call) return res.status(409).json(CALL_RECORD_LOCKED);
     const userId = req.user._id.toString();
     const admins = conversation.group?.admins?.map(String) ?? [];
     const legacyAdmin = admins.length === 0 && conversation.group?.createdBy?.toString() === userId;
@@ -89,6 +93,7 @@ export const toggleReaction = async (req, res) => {
     const loaded = await loadAuthorizedMessage(req.params.messageId, req.user._id);
     if (loaded.error) return respondLoadError(res, loaded.error);
     const { message } = loaded;
+    if (message.call) return res.status(409).json(CALL_RECORD_LOCKED);
     if (message.deletedAt) return res.status(409).json({ message: "Deleted messages cannot be reacted to." });
     const emoji = typeof req.body?.emoji === "string" ? req.body.emoji.trim() : "";
     if (emoji.length > 16 || (emoji && !/\p{Extended_Pictographic}/u.test(emoji))) {

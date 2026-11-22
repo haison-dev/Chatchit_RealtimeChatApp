@@ -1,3 +1,5 @@
+import type { CallLog } from "./call";
+
 export interface Participant {
   _id: string;
   displayName: string;
@@ -58,6 +60,8 @@ export interface Message {
   status?: "sending" | "sent" | "failed";
   editedAt?: string | null;
   deletedAt?: string | null;
+  /** Set when this message is the record of a finished 1-1 call. */
+  call?: CallLog;
   reactions?: Array<{ userId: string; emoji: string }>;
 }
 

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { CALL_KINDS } from "../utils/callOutcome.js";
 
-export const CALL_KINDS = ["audio", "video"];
 export const CALL_RING_TIMEOUT_MS = 45_000;
 
 /**
@@ -34,6 +34,7 @@ export const createCallManager = ({ ringTimeoutMs = CALL_RING_TIMEOUT_MS, onTime
       state: "ringing",
       callerSocketId,
       calleeSocketId: null,
+      acceptedAt: null, // epoch ms, set when the callee picks up
       timer: null,
     };
     call.timer = setTimeout(() => {
@@ -54,6 +55,7 @@ export const createCallManager = ({ ringTimeoutMs = CALL_RING_TIMEOUT_MS, onTime
     if (!call || call.state !== "ringing" || call.calleeId !== userId) return null;
     clearTimeout(call.timer);
     call.state = "active";
+    call.acceptedAt = Date.now();
     call.calleeSocketId = socketId;
     return call;
   };

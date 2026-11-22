@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 import UserAvatar from "./UserAvatar";
 import MessageImage from "./MessageImage";
+import CallLogMessage from "./CallLogMessage";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -99,13 +100,25 @@ const MessageItem = ({
     catch { toast.error("Không thể cập nhật cảm xúc."); }
   };
 
+  const timeSeparator = isShowTime && (
+    <span className="my-2 flex justify-center px-1 text-xs text-muted-foreground">
+      {formatMessageTime(new Date(message.createdAt))}
+    </span>
+  );
+
+  // A finished call is shown as a record, not as a bubble: it cannot be edited or reacted to.
+  if (message.call && !message.deletedAt) {
+    return (
+      <>
+        {timeSeparator}
+        <CallLogMessage call={message.call} isOwn={!!message.isOwn} createdAt={message.createdAt} />
+      </>
+    );
+  }
+
   return (
     <>
-      {isShowTime && (
-        <span className="my-2 flex justify-center px-1 text-xs text-muted-foreground">
-          {formatMessageTime(new Date(message.createdAt))}
-        </span>
-      )}
+      {timeSeparator}
       <div className={cn("group flex gap-2", isGroupBreak ? "mt-3" : "mt-0.5", message.isOwn ? "justify-end" : "justify-start")}>
         {!message.isOwn && (
           <div className="w-8 shrink-0">

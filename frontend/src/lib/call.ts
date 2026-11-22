@@ -1,4 +1,4 @@
-import type { CallEndReason, CallFailureReason, CallKind, CallRole } from "@/types/call";
+import type { CallEndReason, CallFailureReason, CallKind, CallLog, CallRole } from "@/types/call";
 
 /** STUN lets two browsers find each other. Calls across strict NATs need a TURN relay as well. */
 export const ICE_SERVERS: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
@@ -72,4 +72,23 @@ export const formatCallDuration = (totalSeconds: number): string => {
   const minutes = Math.floor((seconds % 3600) / 60);
   const rest = String(seconds % 60).padStart(2, "0");
   return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}:${rest}` : `${String(minutes).padStart(2, "0")}:${rest}`;
+};
+
+/** What a call record shows to the person looking at it: a title, a detail line and whether it was missed by them. */
+export const getCallLogText = (call: CallLog, isOwn: boolean): { title: string; detail: string; missed: boolean } => {
+  const title = call.kind === "video" ? "Cuộc gọi video" : "Cuộc gọi thoại";
+  switch (call.status) {
+    case "completed":
+      return { title, detail: formatCallDuration(call.duration), missed: false };
+    case "rejected":
+      return { title, detail: isOwn ? "Bị từ chối" : "Bạn đã từ chối", missed: false };
+    case "cancelled":
+      return isOwn
+        ? { title, detail: "Bạn đã hủy", missed: false }
+        : { title, detail: "Cuộc gọi nhỡ", missed: true };
+    default:
+      return isOwn
+        ? { title, detail: "Không có người trả lời", missed: false }
+        : { title, detail: "Cuộc gọi nhỡ", missed: true };
+  }
 };

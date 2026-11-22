@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { areFriends } from "../utils/friendHelper.js";
-import { CALL_KINDS, createCallManager } from "./callManager.js";
+import { recordCallMessage } from "../utils/callMessage.js";
+import { CALL_KINDS } from "../utils/callOutcome.js";
+import { createCallManager } from "./callManager.js";
 import { createEventLimiter } from "./eventLimiter.js";
 
 // SDP offers/answers are a few KB; reject anything bigger than the socket frame budget.
@@ -15,8 +17,10 @@ const isPlainObject = (value) => value !== null && typeof value === "object" && 
  * call setup (ring/accept/reject/hang up) and the SDP/ICE exchange.
  * Call once per server, then call the returned function for every socket.
  */
-export const createCallHandlers = (io) => {
+export const createCallHandlers = (io, { recordCall = recordCallMessage } = {}) => {
   const emitEnded = (call, reason) => {
+    // The conversation keeps a record of every call that ended (duration, missed, rejected, ...).
+    Promise.resolve(recordCall(io, call, reason)).catch((error) => console.error("Error saving call message:", error));
     const payload = { callId: call.id, reason };
     io.to(call.callerSocketId).emit("call:ended", payload);
     // Before anyone accepted, every device of the callee is ringing.
