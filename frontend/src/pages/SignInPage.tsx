@@ -3,11 +3,17 @@ import { SigninForm } from '@/components/auth/signin-form'
 import ChatShowcase from '@/components/auth/ChatShowcase'
 import Logo from '@/components/brand/Logo'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { usePageMeta } from '@/hooks/use-page-meta'
 
 // Sign-in page: always dark, the form on the left and the 3D conversation on the right.
 // The sign-up page has its own, lighter layout. The `dark` class makes every theme token
 // inside this page dark whatever theme the rest of the app uses.
 const SignInPage = () => {
+  usePageMeta({
+    title: 'Đăng nhập',
+    description: 'Đăng nhập Chatchit để nhắn tin, gọi thoại và gọi video với bạn bè theo thời gian thực.',
+    path: '/signin',
+  })
   // The 3D scene is only worth loading where there is room for it.
   const showArtwork = useMediaQuery('(min-width: 1024px)')
 

@@ -4,11 +4,13 @@ import ProfileScreen from "@/components/profile/ProfileScreen";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { usePageMeta } from "@/hooks/use-page-meta";
 import { CHAT_PATH } from "@/lib/routes";
 
 /** /profile/:userId, a full screen next to the sidebar (not a popup). */
 const ProfilePage = () => {
   const { userId = "" } = useParams();
+  usePageMeta({ title: "Hồ sơ" });
 
   return (
     <SidebarInset className="flex h-full flex-1 flex-col overflow-hidden rounded-sm shadow-md">
