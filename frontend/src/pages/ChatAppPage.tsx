@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react"
 import { Route, Routes, useNavigate } from "react-router"
+import CallOverlay from "@/components/call/CallOverlay"
 import ChatWindowLayout from "@/components/chat/ChatWindowLayout"
 import ChatWindowSkeleton from "@/components/chat/ChatWindowSkeleton"
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
@@ -29,6 +30,7 @@ const ChatAppPage = () => {
   return (
     <SidebarProvider>
       <AppSidebar/>
+      <CallOverlay />
 
       <div className="flex h-screen w-full p-2">
         <Suspense fallback={<ChatWindowSkeleton />}>

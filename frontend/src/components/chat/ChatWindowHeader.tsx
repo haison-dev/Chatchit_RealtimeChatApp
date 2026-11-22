@@ -11,6 +11,7 @@ import GroupSettingsDialog from "./GroupSettingsDialog";
 import MessageSearchDialog from "./MessageSearchDialog";
 import { Link } from "react-router";
 import { profilePath } from "@/lib/routes";
+import CallButtons from "../call/CallButtons";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const activeConvo = useChatStore((state) =>
@@ -96,6 +97,7 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
               )}
           </div>
           <div className="ml-auto flex items-center">
+            {chat.type === "direct" && otherUser && <CallButtons peer={otherUser} />}
             <MessageSearchDialog conversationId={chat._id} />
             {chat.type === "group" && <GroupSettingsDialog conversation={chat} />}
           </div>
