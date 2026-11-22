@@ -1,0 +1,37 @@
+name: Keep backend awake
+
+# Render's free plan puts the backend to sleep after ~15 minutes without traffic, which
+# drops sockets and makes calls impossible. Ping /health every 5 minutes from 08:00 to
+# 23:59 Vietnam time (UTC+7, i.e. 01:00-16:55 UTC). Outside those hours it is left to sleep.
+#
+# GitHub only runs scheduled workflows from the default branch, so this file must be on
+# `main`. It needs the repository secret BACKEND_HEALTH_URL, e.g. https://<service>.onrender.com/health
+
+on:
+  schedule:
+    - cron: "*/5 1-16 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping /health
+        env:
+          BACKEND_HEALTH_URL: ${{ secrets.BACKEND_HEALTH_URL }}
+        run: |
+          if [ -z "$BACKEND_HEALTH_URL" ]; then
+            echo "::error::Secret BACKEND_HEALTH_URL is not set (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          # A sleeping service can need a minute or more to wake up, so allow a long first request.
+          curl --silent --show-error --fail --max-time 120 --retry 2 --retry-delay 10 --retry-all-errors \
+            --output /dev/null --write-out "health responded with HTTP %{http_code} in %{time_total}s\n" \
+            "$BACKEND_HEALTH_URL"
