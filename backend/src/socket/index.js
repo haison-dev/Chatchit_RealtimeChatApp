@@ -1,11 +1,11 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
-import { socketAuthMiddleware } from "../middlewares/socketMiddleware.js";
-import { getUserConversationsForSokectIO } from "../controllers/conversationController.js";
-import { authorizeConversationJoin } from "./authorizeConversationJoin.js";
-import { createCallHandlers } from "./callHandlers.js";
-import { createEventLimiter } from "./eventLimiter.js";
+import { socketAuthMiddleware } from "../middlewares/socket.middleware.js";
+import { getUserConversationsForSokectIO } from "../controllers/conversation.controller.js";
+import { authorizeConversationJoin } from "../services/conversation.service.js";
+import { createCallHandlers } from "./call.handler.js";
+import { createEventLimiter } from "../utils/event-limiter.util.js";
 
 const app = express();
 

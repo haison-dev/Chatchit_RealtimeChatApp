@@ -2,15 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import Session from "../src/models/Session.js";
-import User from "../src/models/User.js";
-import { signIn } from "../src/controllers/authController.js";
-import { listUsers, revokeSession, revokeUserSessions } from "../src/controllers/adminController.js";
-import { requireAdmin } from "../src/middlewares/adminMiddleware.js";
-import { protectedRoute } from "../src/middlewares/authMiddleware.js";
-import { buildDailySeries, startOfVietnamDay, vietnamDayKey } from "../src/utils/adminStats.js";
-import { isSessionActive } from "../src/utils/sessionHelper.js";
-import { describeUserAgent } from "../src/utils/userAgent.js";
+import Session from "../src/models/session.model.js";
+import User from "../src/models/user.model.js";
+import { signIn } from "../src/controllers/auth.controller.js";
+import { listUsers, revokeSession, revokeUserSessions } from "../src/controllers/admin.controller.js";
+import { requireAdmin } from "../src/middlewares/admin.middleware.js";
+import { protectedRoute } from "../src/middlewares/auth.middleware.js";
+import { buildDailySeries, startOfVietnamDay, vietnamDayKey } from "../src/utils/admin-stats.util.js";
+import { isSessionActive } from "../src/services/session.service.js";
+import { describeUserAgent } from "../src/utils/user-agent.util.js";
 
 process.env.ACCESS_TOKEN_SECRET ??= "test-secret";
 
