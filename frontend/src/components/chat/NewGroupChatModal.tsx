@@ -17,8 +17,9 @@ import InviteSuggestionList from "../NewGroupChat/InviteSuggestionList";
 import SelectedUserList from "../NewGroupChat/SelectedUserList";
 import { toast } from "sonner";
 import { useChatStore } from "@/stores/useChatStore";
+import { cn } from "@/lib/utils";
 
-const NewGroupChatModal = () => {
+const NewGroupChatModal = ({ triggerClassName }: { triggerClassName?: string }) => {
   const [groupName, setGroupName] = useState("");
   const [search, setSearch] = useState("");
   const { friends, getFriends } = useFriendStore();
@@ -71,7 +72,7 @@ const NewGroupChatModal = () => {
         <Button
           variant="ghost"
           onClick={handleGetFriends}
-          className="flex z-10 justify-center items-center size-5 rounded-full hover:bg-sidebar-accent transition cursor-pointer"
+          className={cn("flex z-10 justify-center items-center size-5 rounded-full hover:bg-sidebar-accent transition cursor-pointer", triggerClassName)}
         >
           <Users className="size-4" />
           <span className="sr-only">Tạo nhóm</span>

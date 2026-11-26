@@ -1,6 +1,7 @@
 import { useChatStore } from "@/stores/useChatStore";
 import type { Conversation, Participant } from "@/types/chat";
 import { SidebarTrigger, useSidebar } from "../ui/sidebar";
+import ScreenNavButton from "../ScreenNavButton";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Separator } from "../ui/separator";
 import UserAvatar from "./UserAvatar";
@@ -28,8 +29,8 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
 
   if (!chat) {
     // Without a conversation there is no other header, so the toggle must be offered
-    // whenever the sidebar is hidden; otherwise a collapsed sidebar cannot be reopened.
-    if (!isMobile && sidebarState === "expanded") return null;
+    // whenever the sidebar is collapsed; otherwise it cannot be reopened. A phone has no sidebar.
+    if (isMobile || sidebarState === "expanded") return null;
     return (
       <header className="sticky top-0 z-10 flex w-full items-center gap-2 px-4 py-2">
         <SidebarTrigger className="-ml-1 text-foreground" aria-label="Mở danh sách trò chuyện" />
@@ -51,12 +52,14 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
       : `${activeTypingUsers.map((typingUser) => typingUser.displayName).join(", ")} đang nhập...`;
 
   return (
-    <header className="sticky top-0 z-10 px-4 py-2 flex items-center bg-background">
+    <header className="sticky top-0 z-10 px-2 py-2 flex items-center bg-background md:px-4">
       <div className="flex items-center gap-2 w-full">
-        <SidebarTrigger className="-ml-1 text-foreground" />
-        <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h4" />
+        <div className="ml-2 md:ml-0">
+          <ScreenNavButton />
+        </div>
+        <Separator orientation="vertical" className="mr-2 hidden data-[orientation=vertical]:h4 md:block" />
 
-        <div className="p-2 w-full flex items-center gap-3">
+        <div className="flex w-full min-w-0 items-center gap-2 p-0 md:gap-3 md:p-2">
           {/* avatar */}
           <div className="relative">
             {
@@ -81,22 +84,22 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
               ) : (
                 <GroupChatAvatar
                   participants={chat.participants}
-                  type="sidebar"  
+                  type={isMobile ? "chat" : "sidebar"}
                 />
               )
             }
           </div>
 
           {/* name */}
-            <div>
-              <h2 className="font-semibold text-foreground">
+            <div className="min-w-0">
+              <h2 className="truncate font-semibold text-foreground">
                 {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
               </h2>
               {typingLabel && (
                 <p className="text-xs text-primary animate-pulse">{typingLabel}</p>
               )}
           </div>
-          <div className="ml-auto flex items-center">
+          <div className="ml-auto flex shrink-0 items-center">
             {chat.type === "direct" && otherUser && <CallButtons peer={otherUser} />}
             <MessageSearchDialog conversationId={chat._id} />
             {chat.type === "group" && <GroupSettingsDialog conversation={chat} />}

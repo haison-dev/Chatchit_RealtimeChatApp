@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/apiError";
+import { useShowConversation } from "@/hooks/use-show-conversation";
 import { CHAT_PATH } from "@/lib/routes";
 import { userService } from "@/services/userService";
 import { useChatStore } from "@/stores/useChatStore";
@@ -36,6 +37,7 @@ const ProfileSkeleton = () => (
  */
 const ProfileScreen = ({ userId }: { userId: string }) => {
   const navigate = useNavigate();
+  const showConversation = useShowConversation();
   const [result, setResult] = useState<LoadResult>(null);
   const [version, setVersion] = useState(0);
   const [editing, setEditing] = useState(false);
@@ -121,7 +123,7 @@ const ProfileScreen = ({ userId }: { userId: string }) => {
           onEdit={() => setEditing(true)}
           onMessage={() => void run(async () => {
             await openDirectChat(profile._id);
-            navigate(CHAT_PATH);
+            showConversation(useChatStore.getState().activeConversationId);
           }, "Không thể mở cuộc trò chuyện.")}
           onAddFriend={() => void run(async () => {
             toast.success(await addFriend(profile._id));
