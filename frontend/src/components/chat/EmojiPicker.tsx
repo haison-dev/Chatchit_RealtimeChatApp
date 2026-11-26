@@ -1,4 +1,4 @@
-import { useThemeStore } from "@/stores/useThemeStore";
+import { useThemeStore } from "@/stores/theme.store";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Smile } from "lucide-react";
 import { lazy, Suspense, useState } from "react";

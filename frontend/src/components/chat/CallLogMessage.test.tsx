@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getCallLogText } from "@/lib/call";
-import type { CallLog } from "@/types/call";
-import type { Message } from "@/types/chat";
+import type { CallLog } from "@/interfaces/call.interface";
+import type { Message } from "@/interfaces/chat.interface";
 import CallLogMessage from "./CallLogMessage";
 import MessageItem from "./MessageItem";
 

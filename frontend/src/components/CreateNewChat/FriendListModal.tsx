@@ -1,9 +1,9 @@
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useFriendStore } from "@/stores/friend.store";
 import { DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { MessageCircleMore, User } from "lucide-react";
 import { Card } from "../ui/card";
 import UserAvatar from "../chat/UserAvatar";
-import { useChatStore } from "@/stores/useChatStore";
+import { useChatStore } from "@/stores/chat.store";
 
 const FriendListModal = () => {
   const { friends } = useFriendStore();

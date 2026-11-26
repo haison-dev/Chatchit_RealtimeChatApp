@@ -1,4 +1,4 @@
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useFriendStore } from "@/stores/friend.store";
 import { Card } from "../ui/card";
 import { Dialog, DialogTrigger } from "../ui/dialog";
 import { MessageCircle } from "lucide-react";

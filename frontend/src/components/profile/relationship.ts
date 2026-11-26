@@ -1,4 +1,4 @@
-import type { RelationshipStatus } from "@/types/user";
+import type { RelationshipStatus } from "@/interfaces/user.interface";
 
 /** Short badge text for each relationship, shared by the search list and the profile. */
 export const RELATIONSHIP_LABEL: Record<RelationshipStatus, string | null> = {

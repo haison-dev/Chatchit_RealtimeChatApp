@@ -1,7 +1,7 @@
 import { Phone, Video } from "lucide-react";
-import { useCallStore } from "@/stores/useCallStore";
-import { useSocketStore } from "@/stores/useSocketStore";
-import type { CallPeer } from "@/types/call";
+import { useCallStore } from "@/stores/call.store";
+import { useSocketStore } from "@/stores/socket.store";
+import type { CallPeer } from "@/interfaces/call.interface";
 import { Button } from "../ui/button";
 
 /** Voice and video call buttons for a 1-1 chat header. */

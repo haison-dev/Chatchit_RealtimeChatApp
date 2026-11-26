@@ -1,40 +1,29 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/apiError";
+import { getApiErrorMessage } from "@/lib/api-error";
 import ConfirmDialog from "../ConfirmDialog";
 import { DropdownMenuItem } from "../ui/dropdown-menu";
-import type { Conversation } from "@/types/chat";
+import type { Conversation } from "@/interfaces/chat.interface";
 import ChatCard from "./ChatCard";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
-import { useNavigate } from "react-router";
-import { CHAT_PATH } from "@/lib/routes";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
+import { useSelectConversation } from "@/hooks/use-select-conversation";
 import { cn } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
 import UnreadCountBadge from "./UnreadCountBadge";
-import { useSocketStore } from "@/stores/useSocketStore";
+import { useSocketStore } from "@/stores/socket.store";
 
 const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const userId = useAuthStore((state) => state.user?._id);
   const isActive = useChatStore((state) => state.activeConversationId === convo._id);
-  const setActiveConversation = useChatStore((state) => state.setActiveConversation);
-  const fetchMessages = useChatStore((state) => state.fetchMessages);
-  const navigate = useNavigate();
+  const handleSelectConversation = useSelectConversation();
   const deleteConversation = useChatStore((state) => state.deleteConversation);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const otherUser = userId ? convo.participants.find((p) => p._id !== userId) : undefined;
   // Subscribe to this contact's presence only, not the whole online list.
   const isOnline = useSocketStore((state) => !!otherUser && state.onlineUsers.includes(otherUser._id));
-
-  const handleSelectConversation = useCallback(async (id: string) => {
-    setActiveConversation(id);
-    navigate(CHAT_PATH);
-    if (!useChatStore.getState().messages[id]) {
-      await fetchMessages(id);
-    }
-  }, [fetchMessages, navigate, setActiveConversation]);
 
   if (!userId || !otherUser) return null;
 

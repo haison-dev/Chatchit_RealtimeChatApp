@@ -26,7 +26,8 @@ const InstallAppBanner = () => {
     <div
       role="region"
       aria-label="Cài đặt ứng dụng"
-      className="fixed inset-x-3 top-3 z-40 flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xl"
+      // Above the bottom menu: at the top it would cover the back button and the search box.
+      className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xl"
     >
       <LogoMark className="size-10" />
       <div className="min-w-0 flex-1">

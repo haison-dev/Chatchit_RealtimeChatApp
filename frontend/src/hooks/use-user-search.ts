@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getApiErrorMessage } from "@/lib/apiError";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { SEARCH_QUERY_MIN_LENGTH, sanitizeText } from "@/lib/sanitize";
-import { userService } from "@/services/userService";
-import type { UserSearchResult } from "@/types/user";
+import { userService } from "@/services/user.service";
+import type { UserSearchResult } from "@/interfaces/user.interface";
 
 const SEARCH_DEBOUNCE_MS = 350;
 

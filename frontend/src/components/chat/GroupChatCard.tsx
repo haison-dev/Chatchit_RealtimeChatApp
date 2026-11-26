@@ -1,9 +1,8 @@
-import { memo, useCallback } from "react";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
-import { useNavigate } from "react-router";
-import { CHAT_PATH } from "@/lib/routes";
-import type { Conversation } from "@/types/chat";
+import { memo } from "react";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
+import { useSelectConversation } from "@/hooks/use-select-conversation";
+import type { Conversation } from "@/interfaces/chat.interface";
 import { cn } from "@/lib/utils";
 import UnreadCountBadge from "./UnreadCountBadge";
 import GroupChatAvatar from "./GroupChatAvatar";
@@ -12,17 +11,7 @@ import ChatCard from "./ChatCard";
 const GroupChatCard = ({ convo }: { convo: Conversation }) => {
   const userId = useAuthStore((state) => state.user?._id);
   const isActive = useChatStore((state) => state.activeConversationId === convo._id);
-  const setActiveConversation = useChatStore((state) => state.setActiveConversation);
-  const fetchMessages = useChatStore((state) => state.fetchMessages);
-  const navigate = useNavigate();
-
-  const handleSelectConversation = useCallback(async (id: string) => {
-    setActiveConversation(id);
-    navigate(CHAT_PATH);
-    if (!useChatStore.getState().messages[id]) {
-      await fetchMessages(id);
-    }
-  }, [fetchMessages, navigate, setActiveConversation]);
+  const handleSelectConversation = useSelectConversation();
 
   if (!userId) return null;
 

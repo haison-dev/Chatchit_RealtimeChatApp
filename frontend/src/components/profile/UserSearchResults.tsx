@@ -3,7 +3,7 @@ import { SearchX } from "lucide-react";
 import { SEARCH_QUERY_MIN_LENGTH } from "@/lib/sanitize";
 import { profilePath } from "@/lib/routes";
 import { useUserSearch } from "@/hooks/use-user-search";
-import type { UserSearchResult } from "@/types/user";
+import type { UserSearchResult } from "@/interfaces/user.interface";
 import { Skeleton } from "../ui/skeleton";
 import UserAvatar from "../chat/UserAvatar";
 import MutualFriendsPreview from "./MutualFriendsPreview";

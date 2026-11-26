@@ -1,4 +1,4 @@
-import type { Friend } from "@/types/user";
+import type { Friend } from "@/interfaces/user.interface";
 import UserAvatar from "../chat/UserAvatar";
 
 interface InviteSuggestionListProps {

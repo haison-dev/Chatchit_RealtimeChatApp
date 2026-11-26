@@ -5,10 +5,11 @@ import { Input } from "../ui/input";
 interface UserSearchBoxProps {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }
 
 /** Search field at the top of the sidebar; typing swaps the sidebar lists for the results. */
-const UserSearchBox = ({ value, onChange }: UserSearchBoxProps) => (
+const UserSearchBox = ({ value, onChange, placeholder = "Tìm người theo tên hoặc email" }: UserSearchBoxProps) => (
   <div className="relative" role="search">
     <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
     <Input
@@ -17,8 +18,8 @@ const UserSearchBox = ({ value, onChange }: UserSearchBoxProps) => (
       onChange={(event) => onChange(event.target.value)}
       onKeyDown={(event) => { if (event.key === "Escape") onChange(""); }}
       maxLength={SEARCH_QUERY_MAX_LENGTH}
-      placeholder="Tìm người theo tên hoặc email"
-      aria-label="Tìm người theo tên hoặc email"
+      placeholder={placeholder}
+      aria-label={placeholder}
       autoComplete="off"
       className="h-10 rounded-full border-border/60 bg-background pl-9 pr-9 shadow-xs [&::-webkit-search-cancel-button]:hidden"
     />

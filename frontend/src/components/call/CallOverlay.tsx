@@ -3,7 +3,7 @@ import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from "lucide-react";
 import { useCallSounds } from "@/hooks/use-call-sounds";
 import { formatCallDuration } from "@/lib/call";
 import { cn } from "@/lib/utils";
-import { useCallStore } from "@/stores/useCallStore";
+import { useCallStore } from "@/stores/call.store";
 import UserAvatar from "../chat/UserAvatar";
 import { Button } from "../ui/button";
 

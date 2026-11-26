@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   backend:
-    name: Backend (lint cú pháp, test, audit)
+    name: Backend (lint cú pháp, kiểm tra kiểu, test, audit)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -36,6 +36,8 @@ jobs:
         run: npm ci
       - name: Kiểm tra cú pháp toàn bộ source
         run: find src -name "*.js" -print0 | xargs -0 -n1 node --check
+      - name: Kiểm tra controller gọi service đúng interface
+        run: npm run typecheck
       - name: Chạy test
         run: npm test
       - name: Kiểm tra lỗ hổng dependencies

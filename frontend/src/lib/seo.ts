@@ -14,7 +14,7 @@ export const OG_IMAGE_HEIGHT = 630;
 /** Pages anyone can open. Only these go into the sitemap. */
 export const PUBLIC_PATHS = ["/signin", "/signup"];
 /** Pages behind sign-in; crawlers cannot use them, so robots.txt keeps them out. */
-export const PRIVATE_PATH_PREFIXES = ["/profile/"];
+export const PRIVATE_PATH_PREFIXES = ["/profile/", "/chat/", "/friends", "/admin"];
 
 export const pageTitle = (title?: string) =>
   title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} - Nhắn tin thời gian thực`;

@@ -5,7 +5,7 @@ describe("refreshAccessToken", () => {
   afterEach(() => vi.restoreAllMocks());
 
   it("shares one request between parallel callers", async () => {
-    const post = vi.spyOn(api, "post").mockResolvedValue({ data: { accessToken: "token-1" } });
+    const post = vi.spyOn(api, "post").mockResolvedValue({ data: { success: true, message: null, data: { accessToken: "token-1" } } });
 
     // Route guard, socket reconnect and the store can all ask at the same moment.
     const results = await Promise.all([refreshAccessToken(), refreshAccessToken(), refreshAccessToken()]);
@@ -17,8 +17,8 @@ describe("refreshAccessToken", () => {
 
   it("starts a new request once the previous one has finished", async () => {
     const post = vi.spyOn(api, "post")
-      .mockResolvedValueOnce({ data: { accessToken: "first" } })
-      .mockResolvedValueOnce({ data: { accessToken: "second" } });
+      .mockResolvedValueOnce({ data: { success: true, message: null, data: { accessToken: "first" } } })
+      .mockResolvedValueOnce({ data: { success: true, message: null, data: { accessToken: "second" } } });
 
     await expect(refreshAccessToken()).resolves.toBe("first");
     await expect(refreshAccessToken()).resolves.toBe("second");
@@ -28,7 +28,7 @@ describe("refreshAccessToken", () => {
   it("lets every caller see a failure and recovers afterwards", async () => {
     const post = vi.spyOn(api, "post")
       .mockRejectedValueOnce(new Error("offline"))
-      .mockResolvedValueOnce({ data: { accessToken: "back" } });
+      .mockResolvedValueOnce({ data: { success: true, message: null, data: { accessToken: "back" } } });
 
     const outcomes = await Promise.allSettled([refreshAccessToken(), refreshAccessToken()]);
     expect(outcomes.map((outcome) => outcome.status)).toEqual(["rejected", "rejected"]);

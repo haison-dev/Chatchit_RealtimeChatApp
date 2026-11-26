@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProfileActions from "./ProfileActions";
 import MutualFriendsPreview from "./MutualFriendsPreview";
-import type { RelationshipStatus } from "@/types/user";
+import type { RelationshipStatus } from "@/interfaces/user.interface";
 
 const renderActions = (status: RelationshipStatus, busy = false) => {
   const handlers = {
