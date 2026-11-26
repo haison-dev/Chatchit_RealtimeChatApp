@@ -1,0 +1,159 @@
+import { create } from "zustand";
+import { isAxiosError } from "axios";
+import { toast } from "sonner";
+import { authService } from "@/services/auth.service";
+import { userService } from "@/services/user.service";
+import type { AuthState } from "@/interfaces/store.interface";
+import { persist } from "zustand/middleware";
+import { useChatStore } from "./chat.store";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { clearImageCache } from "@/lib/image-cache";
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      accessToken: null,
+      user: null,
+      loading: false,
+
+      setAccessToken: (accessToken) => {
+        set({ accessToken });
+      },
+
+      clearState: () =>{
+        set({
+          accessToken: null,
+          user: null,
+          loading: false,
+        })
+        useChatStore.getState().reset();
+        clearImageCache();
+          localStorage.removeItem("auth-storage");
+          localStorage.removeItem("chat-storage");
+
+          Object.keys(sessionStorage)
+            .filter((key) => key.startsWith("chat-scroll-"))
+            .forEach((key) => sessionStorage.removeItem(key));
+        
+      },
+        
+
+      signUp: async (username, password, email, firstName, lastName) => {
+        try {
+          set({ loading: true });
+
+          // call api
+          await authService.signUp(username, password, email, firstName, lastName);
+
+          toast.success(
+            "Đăng ký thành công! Bạn sẽ được chuyển sang trang đăng nhập."
+          );
+        } catch (error) {
+          console.error(error);
+          toast.error(getApiErrorMessage(error, "Đăng ký thất bại. Vui lòng thử lại."));
+          throw error;
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      signIn: async (username, password) => {
+        try {
+          get().clearState();
+          set({ loading: true });
+
+          const { accessToken } = await authService.signIn(username, password);
+          get().setAccessToken(accessToken)
+
+          await get().fetchMe();
+          useChatStore.getState().fetchConversations();
+          toast.success("Chào mừng bạn quay lại với Chatchit");
+        } catch (error) {
+          console.error(error);
+          toast.error(getApiErrorMessage(error, "Đăng nhập thất bại. Vui lòng thử lại."));
+          throw error;
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      signOut: async () => {
+        try {
+          get().clearState();
+          await authService.signOut();
+          toast.success("Đăng xuất thành công.");
+        } catch (error) {
+          console.error(error);
+          toast.error("Đăng xuất thất bại. Vui lòng thử lại.");
+        }
+      },
+
+      fetchMe: async () => {
+        try {
+          set({ loading: true });
+          const user = await authService.fetchMe();
+          set({ user });
+        } catch (error) {
+          console.error(error);
+          set({ user: null, accessToken: null });
+          toast.error("Lỗi xảy ra khi lấy dữ liệu người dùng. Hãy thử lại!");
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      syncUser: async () => {
+        try {
+          const user = await authService.fetchMe();
+          if (get().accessToken) set({ user });
+        } catch (error) {
+          console.error("Không thể đồng bộ thông tin người dùng", error);
+        }
+      },
+
+      updateProfile: async (input) => {
+        const previous = get().user;
+        const user = await userService.updateMe(input);
+        set({ user });
+        // Names and avatars are copied into the conversation list, so reload it.
+        if (previous && (previous.displayName !== user.displayName || previous.avatarUrl !== user.avatarUrl)) {
+          void useChatStore.getState().fetchConversations();
+        }
+      },
+
+      refresh: async () => {
+        // The user is persisted, so without one this browser was never signed in (or signed out).
+        const wasSignedIn = Boolean(get().user);
+        try {
+          set({ loading: true });
+          const { user, fetchMe, setAccessToken } = get();
+          const accessToken = await authService.refresh();
+
+          setAccessToken(accessToken);
+
+          if (!user) {
+            await fetchMe();
+          }
+        } catch (error) {
+          console.error(error);
+          // Only a rejection from the server means the session is really gone.
+          // A network error or a restarting server must not sign the user out.
+          const rejected = isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403);
+          if (rejected) {
+            // A new visitor has no session that could have expired: send them to sign in quietly.
+            if (wasSignedIn) toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+            get().clearState();
+          } else {
+            toast.error("Không thể kết nối tới máy chủ. Vui lòng tải lại trang.");
+          }
+        } finally {
+          set({ loading: false });
+        }
+      },
+    }), {
+    name: "auth-storage",
+    partialize: (state) => ({
+      user: state.user // only persist user info
+    })
+  })
+);

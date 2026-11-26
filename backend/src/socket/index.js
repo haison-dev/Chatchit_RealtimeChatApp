@@ -1,11 +1,10 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
-import { socketAuthMiddleware } from "../middlewares/socketMiddleware.js";
-import { getUserConversationsForSokectIO } from "../controllers/conversationController.js";
-import { authorizeConversationJoin } from "./authorizeConversationJoin.js";
-import { createCallHandlers } from "./callHandlers.js";
-import { createEventLimiter } from "./eventLimiter.js";
+import { socketAuthMiddleware } from "../middlewares/socket.middleware.js";
+import { conversationService } from "../services/conversation.service.js";
+import { createCallHandlers } from "./call.handler.js";
+import { createEventLimiter } from "../utils/event-limiter.util.js";
 
 const app = express();
 
@@ -22,9 +21,42 @@ const io = new Server(server, {
 
 io.use(socketAuthMiddleware);
 
-const registerCallHandlers = createCallHandlers(io);
+// Tạo lúc có socket đầu tiên chứ không phải lúc nạp module: service import io từ file này,
+// nên tạo ngay sẽ gặp vòng import chưa khởi tạo xong (call.handler -> friend.service -> socket).
+/** @type {ReturnType<typeof createCallHandlers> | undefined} */
+let callHandlers;
+const registerCallHandlers = (socket, allowEvent) => {
+  callHandlers ??= createCallHandlers(io);
+  return callHandlers(socket, allowEvent);
+};
 
 const onlineUsers = new Map(); // { userId: Set<socketId> }
+
+/** Id của những người dùng đang có ít nhất một socket mở. */
+export const getOnlineUserIds = () => Array.from(onlineUsers.keys());
+
+/** Thiết bị (phiên đăng nhập) có đang mở socket hay không. */
+export const isSessionOnline = (sessionId) => {
+  for (const socket of io.of("/").sockets.values()) {
+    if (socket.sessionId === sessionId) return true;
+  }
+  return false;
+};
+
+/**
+ * Báo cho thiết bị của các phiên đã xóa rằng chúng bị đăng xuất, rồi ngắt socket.
+ * Có `userId` thì ngắt luôn socket của người đó dùng token cũ (tạo trước khi có theo dõi phiên).
+ */
+export const disconnectSessions = (sessionIds, { userId } = {}) => {
+  const ended = new Set(sessionIds.map(String));
+  for (const socket of io.of("/").sockets.values()) {
+    const legacy = userId && !socket.sessionId && socket.user?._id?.toString() === userId;
+    if (ended.has(socket.sessionId) || legacy) {
+      socket.emit("session-revoked");
+      socket.disconnect(true);
+    }
+  }
+};
 
 const broadcastOnlineUsers = () => {
   io.emit("online-users", Array.from(onlineUsers.keys()));
@@ -35,7 +67,7 @@ const isConversationId = (value) => typeof value === "string" && /^[a-f\d]{24}$/
 io.on("connection", async (socket) => {
   const user = socket.user;
   const userId = user._id.toString();
-  console.log(`${user.displayName} online with socket ${socket.id}`);
+  console.log(`${user.displayName} đã online với socket ${socket.id}`);
   const allowEvent = createEventLimiter(20, 5);
 
   const userSockets = onlineUsers.get(userId) ?? new Set();
@@ -44,7 +76,7 @@ io.on("connection", async (socket) => {
 
   broadcastOnlineUsers();
 
-  const conversationIds = await getUserConversationsForSokectIO(user._id);
+  const conversationIds = await conversationService.getUserConversationIds(user._id);
   conversationIds.forEach((id) => {
     socket.join(id);
   });
@@ -52,10 +84,10 @@ io.on("connection", async (socket) => {
   socket.on("join-conversation", async (conversationId, acknowledge) => {
     if (typeof acknowledge !== "function") acknowledge = undefined;
     if (!isConversationId(conversationId) || !allowEvent()) {
-      return acknowledge?.({ ok: false, message: "Unable to join conversation." });
+      return acknowledge?.({ ok: false, message: "Không thể vào cuộc trò chuyện." });
     }
     try {
-      const authorization = await authorizeConversationJoin(user._id, conversationId);
+      const authorization = await conversationService.authorizeConversationJoin(user._id, conversationId);
       if (!authorization.ok) {
         return acknowledge?.(authorization);
       }
@@ -63,8 +95,8 @@ io.on("connection", async (socket) => {
       await socket.join(conversationId);
       return acknowledge?.(authorization);
     } catch (error) {
-      console.error("Join conversation error:", error);
-      return acknowledge?.({ ok: false, message: "Unable to join conversation." });
+      console.error("Lỗi khi vào cuộc trò chuyện:", error);
+      return acknowledge?.({ ok: false, message: "Không thể vào cuộc trò chuyện." });
     }
   });
 
@@ -110,7 +142,7 @@ io.on("connection", async (socket) => {
       onlineUsers.delete(userId);
     }
     broadcastOnlineUsers();
-    console.log(`socket disconnected: ${socket.id}`);
+    console.log(`Socket đã ngắt kết nối: ${socket.id}`);
   });
 });
 

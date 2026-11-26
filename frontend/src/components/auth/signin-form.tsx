@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore } from "@/stores/auth.store";
 import { Button } from "../ui/button";
 import AuthField from "./AuthField";
 

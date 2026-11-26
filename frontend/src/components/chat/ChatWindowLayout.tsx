@@ -1,4 +1,4 @@
-import { useChatStore } from "@/stores/useChatStore";
+import { useChatStore } from "@/stores/chat.store";
 import ChatWelcomeScreen from "./ChatWelcomeScreen";
 import ChatWindowSkeleton from "./ChatWindowSkeleton";
 import { SidebarInset } from "../ui/sidebar";

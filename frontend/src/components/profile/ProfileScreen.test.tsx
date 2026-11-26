@@ -4,12 +4,12 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ProfilePage from "@/pages/ProfilePage";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useChatStore } from "@/stores/useChatStore";
-import { useFriendStore } from "@/stores/useFriendStore";
-import { userService } from "@/services/userService";
-import type { UserProfile } from "@/types/user";
+import { useChatStore } from "@/stores/chat.store";
+import { useFriendStore } from "@/stores/friend.store";
+import { userService } from "@/services/user.service";
+import type { UserProfile } from "@/interfaces/user.interface";
 
-vi.mock("@/services/userService", () => ({
+vi.mock("@/services/user.service", () => ({
   userService: { getProfile: vi.fn(), searchUsers: vi.fn(), updateMe: vi.fn() },
 }));
 

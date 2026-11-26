@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/apiError";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   AVATAR_URL_MAX_LENGTH,
   BIO_MAX_LENGTH,
@@ -12,8 +12,8 @@ import {
   isHttpsUrl,
   sanitizeText,
 } from "@/lib/sanitize";
-import { useAuthStore } from "@/stores/useAuthStore";
-import type { UserProfile } from "@/types/user";
+import { useAuthStore } from "@/stores/auth.store";
+import type { UserProfile } from "@/interfaces/user.interface";
 import UserAvatar from "../chat/UserAvatar";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";

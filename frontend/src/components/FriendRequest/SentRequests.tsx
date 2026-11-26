@@ -1,4 +1,4 @@
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useFriendStore } from "@/stores/friend.store";
 import FriendRequestItem from "./FriendRequestItem";
 
 const SentRequests = () => {

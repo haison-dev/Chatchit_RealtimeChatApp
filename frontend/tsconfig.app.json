@@ -24,8 +24,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    //shadcn
-    "baseUrl": ".",
+    // Alias @/ cho shadcn và import nội bộ. Không cần baseUrl (sẽ bị bỏ ở TypeScript 7): paths tính theo vị trí file này.
     "paths": {
       "@/*": [
         "./src/*"

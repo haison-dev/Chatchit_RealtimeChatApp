@@ -6,11 +6,11 @@ import InstallAppBanner from "./InstallAppBanner";
 
 const setViewport = (width: number) => {
   Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
-  window.matchMedia = vi.fn().mockReturnValue({
-    matches: false,
+  window.matchMedia = vi.fn((query: string) => ({
+    matches: width <= Number(/max-width: (\d+)px/.exec(query)?.[1] ?? -1),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-  }) as never;
+  })) as never;
 };
 
 const offerInstall = () => {

@@ -1,4 +1,4 @@
-import { ChevronsUpDown, Download, UserIcon } from "lucide-react";
+import { ChevronsUpDown, Download, ShieldCheck, UserIcon } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,10 +17,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { User } from "@/types/user";
+import type { User } from "@/interfaces/user.interface";
 import Logout from "../auth/Logout";
 import { Link } from "react-router";
-import { profilePath } from "@/lib/routes";
+import { ADMIN_PATH, profilePath } from "@/lib/routes";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
@@ -79,6 +79,14 @@ export function NavUser({ user }: { user: User }) {
                   Hồ sơ của tôi
                 </Link>
               </DropdownMenuItem>
+              {user.role === "admin" && (
+                <DropdownMenuItem asChild>
+                  <Link to={ADMIN_PATH}>
+                    <ShieldCheck className="text-muted-foreground" />
+                    Trang quản trị
+                  </Link>
+                </DropdownMenuItem>
+              )}
               {installStatus === "available" && (
                 <DropdownMenuItem className="cursor-pointer" onSelect={() => void install()}>
                   <Download className="text-muted-foreground" />

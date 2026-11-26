@@ -1,7 +1,7 @@
 import { Phone, PhoneMissed, Video } from "lucide-react";
 import { getCallLogText } from "@/lib/call";
 import { cn, formatMessageTime } from "@/lib/utils";
-import type { CallLog } from "@/types/call";
+import type { CallLog } from "@/interfaces/call.interface";
 
 interface CallLogMessageProps {
   call: CallLog;

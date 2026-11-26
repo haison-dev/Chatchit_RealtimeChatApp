@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import {
   MESSAGES,
   arcPosition,
@@ -11,6 +10,7 @@ import {
   getTimelineState,
   type Person,
 } from "./chatTimeline";
+import { buildPerson, type Disposable, type PersonRig, type Track } from "./buildPerson";
 
 export interface ChatSceneOptions {
   /** Called once when a message reaches its receiver: the moment of the "ting". */
@@ -26,18 +26,14 @@ const FOV = 38;
 const SCENE_WIDTH = 9.6;
 const MIN_CAMERA_DISTANCE = 11;
 const PERSON_X = 2.7;
-const HEAD_TOP_Y = 4.3;
+const HEAD_TOP_Y = 4.5;
 
 const PALETTE = {
-  skin: [0xf6cfae, 0xcf9770],
-  hair: [0x2a1a4a, 0x6b2b1a],
-  shirt: [0x8b5cf6, 0xec4899],
-  screen: [0xc4b5fd, 0xfbcfe8],
   accent: [0xa78bfa, 0xf472b6],
   bubble: [["#8b5cf6", "#6d28d9"], ["#f472b6", "#db2777"]],
 } as const;
-
-type Disposable = { dispose: () => void };
+/** Top of a pedestal: where the feet rest. */
+const FLOOR_Y = 0.18;
 
 const roundedRectPath = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
   ctx.beginPath();
@@ -54,7 +50,7 @@ const createCanvas = (width: number, height: number) => {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D is not available");
+  if (!ctx) throw new Error("Trình duyệt không hỗ trợ Canvas 2D");
   return { canvas, ctx };
 };
 
@@ -146,15 +142,7 @@ const makeGlowTexture = () => {
   return toTexture(canvas);
 };
 
-interface PersonRig {
-  group: THREE.Group;
-  head: THREE.Group;
-  eyes: THREE.Group;
-  phone: THREE.Object3D;
-  screen: THREE.MeshBasicMaterial;
-  screenBase: THREE.Color;
-  tilt: number;
-}
+type SceneRig = PersonRig & { x: number; tilt: number; nod: number };
 
 /**
  * Builds the 3D scene inside `host` and starts animating it.
@@ -162,7 +150,7 @@ interface PersonRig {
  */
 export const createChatScene = (host: HTMLElement, options: ChatSceneOptions = {}): ChatSceneHandle => {
   const disposables: Disposable[] = [];
-  const track = <T extends Disposable>(resource: T): T => {
+  const track: Track = <T extends Disposable>(resource: T): T => {
     disposables.push(resource);
     return resource;
   };
@@ -199,97 +187,31 @@ export const createChatScene = (host: HTMLElement, options: ChatSceneOptions = {
   const standard = (color: number, params: THREE.MeshStandardMaterialParameters = {}) =>
     track(new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.05, ...params }));
 
-  const up = new THREE.Vector3(0, 1, 0);
-  const limb = (from: THREE.Vector3, to: THREE.Vector3, radius: number, material: THREE.Material) => {
-    const direction = new THREE.Vector3().subVectors(to, from);
-    const length = direction.length();
-    const capsule = mesh(new THREE.CapsuleGeometry(radius, Math.max(0.01, length - radius * 2), 6, 12), material);
-    capsule.position.copy(from).addScaledVector(direction, 0.5);
-    capsule.quaternion.setFromUnitVectors(up, direction.normalize());
-    return capsule;
-  };
+  const placePerson = (index: Person): SceneRig => {
+    const stand = new THREE.Group();
+    stand.position.x = index === 0 ? -PERSON_X : PERSON_X;
+    scene.add(stand);
 
-  const buildPerson = (index: Person): PersonRig => {
-    const group = new THREE.Group();
-    const skin = standard(PALETTE.skin[index]);
-    const hair = standard(PALETTE.hair[index], { roughness: 0.85 });
-    const shirt = standard(PALETTE.shirt[index]);
-    const dark = standard(0x1f1235, { roughness: 0.4 });
-    const blush = standard(0xff8fb1, { roughness: 0.9 });
-
-    // pedestal with a glowing rim
-    const pedestal = mesh(new THREE.CylinderGeometry(1.35, 1.5, 0.18, 64), standard(0x1b1030, { roughness: 0.35 }));
-    pedestal.position.y = 0.09;
-    group.add(pedestal);
+    // pedestal with a glowing rim; it stays still while the person on it hops
+    const pedestal = mesh(new THREE.CylinderGeometry(1.35, 1.5, FLOOR_Y, 64), standard(0x1b1030, { roughness: 0.35 }));
+    pedestal.position.y = FLOOR_Y / 2;
+    stand.add(pedestal);
     const rimMaterial = track(new THREE.MeshBasicMaterial({ color: PALETTE.accent[index] }));
     const rim = mesh(new THREE.TorusGeometry(1.4, 0.035, 8, 80), rimMaterial);
     rim.rotation.x = Math.PI / 2;
-    rim.position.y = 0.19;
-    group.add(rim);
+    rim.position.y = FLOOR_Y + 0.01;
+    stand.add(rim);
 
-    // body
-    const body = mesh(new THREE.CapsuleGeometry(0.72, 0.85, 8, 24), shirt);
-    body.position.y = 1.2;
-    group.add(body);
+    const rig = buildPerson(index, track);
+    rig.group.position.y = FLOOR_Y;
+    // each person is turned a little toward the other one
+    rig.group.rotation.y = index === 0 ? 0.42 : -0.42;
+    stand.add(rig.group);
 
-    // head (a group so it can tilt and blink)
-    const head = new THREE.Group();
-    head.position.y = 2.2;
-    group.add(head);
-    const face = mesh(new THREE.SphereGeometry(0.62, 40, 28), skin);
-    face.position.y = 0.45;
-    head.add(face);
-    const hairCap = mesh(new THREE.SphereGeometry(0.66, 40, 28, 0, Math.PI * 2, 0, Math.PI * 0.56), hair);
-    hairCap.position.set(0, 0.5, -0.03);
-    hairCap.rotation.x = -0.25;
-    head.add(hairCap);
-
-    const eyes = new THREE.Group();
-    const eyeGeometry = track(new THREE.SphereGeometry(0.075, 16, 12));
-    ([-1, 1] as const).forEach((side) => {
-      const eye = new THREE.Mesh(eyeGeometry, dark);
-      eye.position.set(side * 0.23, 0.5, 0.55);
-      eye.scale.set(1, 1.25, 0.6);
-      eyes.add(eye);
-      const cheek = mesh(new THREE.SphereGeometry(0.1, 16, 12), blush);
-      cheek.position.set(side * 0.38, 0.36, 0.47);
-      cheek.scale.set(1, 0.6, 0.3);
-      head.add(cheek);
-    });
-    head.add(eyes);
-    const smile = mesh(new THREE.TorusGeometry(0.15, 0.028, 8, 24, Math.PI), dark);
-    smile.rotation.z = Math.PI;
-    smile.position.set(0, 0.3, 0.585);
-    head.add(smile);
-
-    // phone held with both hands
-    const phone = new THREE.Group();
-    phone.position.set(0, 1.75, 0.98);
-    phone.rotation.x = -0.35;
-    group.add(phone);
-    phone.add(mesh(new RoundedBoxGeometry(0.66, 1.1, 0.08, 4, 0.06), dark));
-    const screenBase = new THREE.Color(PALETTE.screen[index]);
-    const screen = track(new THREE.MeshBasicMaterial({ color: screenBase.clone() }));
-    const screenPlane = mesh(new THREE.PlaneGeometry(0.56, 0.98), screen);
-    screenPlane.position.z = 0.045;
-    phone.add(screenPlane);
-
-    ([-1, 1] as const).forEach((side) => {
-      const shoulder = new THREE.Vector3(side * 0.72, 2.0, 0.05);
-      const hand = new THREE.Vector3(side * 0.36, 1.55, 1.0);
-      group.add(limb(shoulder, hand, 0.17, shirt));
-      const palm = mesh(new THREE.SphereGeometry(0.15, 16, 12), skin);
-      palm.position.copy(hand);
-      group.add(palm);
-    });
-
-    group.position.x = index === 0 ? -PERSON_X : PERSON_X;
-    group.rotation.y = index === 0 ? 0.55 : -0.55;
-    scene.add(group);
-    return { group, head, eyes, phone, screen, screenBase, tilt: 0 };
+    return { ...rig, x: stand.position.x, tilt: 0, nod: 0 };
   };
 
-  const rigs: [PersonRig, PersonRig] = [buildPerson(0), buildPerson(1)];
+  const rigs: [SceneRig, SceneRig] = [placePerson(0), placePerson(1)];
 
   // decorative floating shapes for depth
   const floaters = [
@@ -388,22 +310,37 @@ export const createChatScene = (host: HTMLElement, options: ChatSceneOptions = {
     rigs.forEach((rig, index) => {
       const isSender = state.sender === index;
       const isReceiver = state.receiver === index;
-      const bob = Math.sin(time * 1.6 + index * 1.7) * 0.05;
       const jump = isReceiver && state.arrived && state.sinceArrival < 0.45
-        ? Math.sin(clamp01(state.sinceArrival / 0.45) * Math.PI) * 0.25
+        ? Math.sin(clamp01(state.sinceArrival / 0.45) * Math.PI) * 0.22
         : 0;
-      rig.group.position.y = bob + jump;
+      // feet stay on the floor except for the happy hop; only the upper body "breathes"
+      rig.group.position.y = FLOOR_Y + jump;
+      rig.upper.position.y = Math.sin(time * 1.6 + index * 1.7) * 0.018;
 
+      const busy = isSender && state.stage !== "resting";
       // lean toward the other person while typing or sending
       const toward = index === 0 ? -1 : 1;
-      const target = (isSender && state.stage !== "resting" ? 0.14 : 0.03) * toward + Math.sin(time * 1.1 + index) * 0.04;
+      const target = (busy ? 0.12 : 0.03) * toward + Math.sin(time * 1.1 + index) * 0.035;
       rig.tilt += (target - rig.tilt) * lean;
       rig.head.rotation.z = rig.tilt;
+      // look down at the phone while typing, lift the head otherwise
+      rig.nod += ((busy ? 0.16 : 0) - rig.nod) * lean;
+      rig.head.rotation.x = rig.nod;
+
+      // the thumbs take turns tapping while typing
+      const tapping = isSender && state.stage === "typing";
+      rig.thumbs.forEach((thumb, side) => {
+        thumb.rotation.x = tapping ? -Math.max(0, Math.sin(time * 16 + side * Math.PI)) * 0.45 : 0;
+      });
+
+      // a bigger smile when a message comes in
+      const delight = isReceiver && state.arrived ? Math.max(0, 1 - state.sinceArrival / 1.2) : 0;
+      rig.mouth.scale.set(1 + delight * 0.2, 1 + delight * 0.55, 1);
 
       const blinking = (time * 0.9 + index * 0.6) % 3.7 < 0.12;
       rig.eyes.scale.y = blinking ? 0.1 : 1;
 
-      const flicker = isSender && state.stage !== "resting" ? 0.35 + 0.25 * Math.sin(time * 18) : 0;
+      const flicker = busy ? 0.35 + 0.25 * Math.sin(time * 18) : 0;
       const glowAmount = isReceiver && state.arrived ? Math.max(0, 1 - state.sinceArrival / 0.7) : 0;
       rig.screen.color.copy(rig.screenBase).lerp(WHITE, Math.max(flicker, glowAmount));
     });
@@ -416,7 +353,7 @@ export const createChatScene = (host: HTMLElement, options: ChatSceneOptions = {
     typingSprite.visible = state.stage === "typing";
     if (typingSprite.visible) {
       const pop = easeOutBack(state.progress * 4);
-      headTop.set(sender.group.position.x, HEAD_TOP_Y, 0.4);
+      headTop.set(sender.x, HEAD_TOP_Y, 0.4);
       typingSprite.position.copy(headTop);
       typingSprite.scale.set(1.35 * pop, 0.72 * pop, 1);
       typingIndicator.show(Math.floor(time * 5) % 3);
@@ -458,7 +395,7 @@ export const createChatScene = (host: HTMLElement, options: ChatSceneOptions = {
       // Beside the receiver's head, on the side facing the other person, so it never leaves the frame.
       const inward = state.receiver === 1 ? -1.35 : 1.35;
       const pop = easeOutBack(state.sinceArrival / 0.35);
-      tingSprite.position.set(receiver.group.position.x + inward, 3.45 + state.sinceArrival * 0.3, 0.8);
+      tingSprite.position.set(receiver.x + inward, 3.0 + state.sinceArrival * 0.3, 0.8);
       tingSprite.scale.set(1.5 * pop, 0.56 * pop, 1);
       tingMaterial.opacity = 1 - clamp01((state.sinceArrival - 0.9) / 0.5);
     }

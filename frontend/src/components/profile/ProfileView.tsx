@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { CalendarDays, Mail, Phone, Users } from "lucide-react";
-import type { UserProfile } from "@/types/user";
+import type { UserProfile } from "@/interfaces/user.interface";
 import { profilePath } from "@/lib/routes";
 import UserAvatar from "../chat/UserAvatar";
 import { Badge } from "../ui/badge";

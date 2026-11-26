@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useCallStore } from "@/stores/useCallStore";
-import { useSocketStore } from "@/stores/useSocketStore";
+import { useCallStore } from "@/stores/call.store";
+import { useSocketStore } from "@/stores/socket.store";
 import CallButtons from "./CallButtons";
 import CallOverlay from "./CallOverlay";
 

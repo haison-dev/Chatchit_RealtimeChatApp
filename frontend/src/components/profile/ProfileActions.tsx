@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Check, ChevronDown, Loader2, MessageCircle, Pencil, UserCheck, UserMinus, UserPlus } from "lucide-react";
-import type { Relationship } from "@/types/user";
+import type { Relationship } from "@/interfaces/user.interface";
 import ConfirmDialog from "../ConfirmDialog";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";

@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useCallStore } from "@/stores/useCallStore";
+import { useCallStore } from "@/stores/call.store";
 import { useCallSounds } from "./use-call-sounds";
 
 const { startRinging, unlockAudio } = vi.hoisted(() => ({
