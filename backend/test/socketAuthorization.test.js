@@ -5,7 +5,7 @@ import { authorizeConversationJoin } from "../src/socket/authorizeConversationJo
 
 test("socket room authorization rejects malformed IDs", async () => {
   const result = await authorizeConversationJoin("507f1f77bcf86cd799439011", "invalid");
-  assert.deepEqual(result, { ok: false, message: "Invalid conversation ID." });
+  assert.deepEqual(result, { ok: false, message: "Mã cuộc trò chuyện không hợp lệ." });
 });
 
 test("socket room authorization rejects non-members", async () => {
@@ -17,7 +17,7 @@ test("socket room authorization rejects non-members", async () => {
       "507f1f77bcf86cd799439011",
       "507f1f77bcf86cd799439012",
     );
-    assert.deepEqual(result, { ok: false, message: "Conversation not found." });
+    assert.deepEqual(result, { ok: false, message: "Không tìm thấy cuộc trò chuyện." });
   } finally {
     Conversation.exists = originalExists;
   }

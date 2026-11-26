@@ -28,8 +28,8 @@ export const authMe = async (req, res) => {
 
         return res.status(200).json({ user });
     } catch (error) {
-        console.error('Error when calling authMe.', error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Lỗi khi lấy thông tin tài khoản:', error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 }
 
@@ -44,41 +44,41 @@ export const updateMe = async (req, res) => {
         if ('displayName' in body) {
             const displayName = sanitizeText(body.displayName);
             if (!displayName || displayName.length > DISPLAY_NAME_MAX_LENGTH) {
-                return res.status(400).json({ message: `Display name must be between 1 and ${DISPLAY_NAME_MAX_LENGTH} characters.` });
+                return res.status(400).json({ message: `Tên hiển thị phải dài từ 1 đến ${DISPLAY_NAME_MAX_LENGTH} ký tự.` });
             }
             set.displayName = displayName;
         }
 
         if ('bio' in body) {
             if (typeof body.bio !== 'string') {
-                return res.status(400).json({ message: "Bio must be text." });
+                return res.status(400).json({ message: "Phần giới thiệu phải là chuỗi ký tự." });
             }
             const bio = sanitizeText(body.bio, { multiline: true });
             if (bio.length > BIO_MAX_LENGTH) {
-                return res.status(400).json({ message: `Bio must not exceed ${BIO_MAX_LENGTH} characters.` });
+                return res.status(400).json({ message: `Phần giới thiệu không được quá ${BIO_MAX_LENGTH} ký tự.` });
             }
             if (bio) set.bio = bio; else unset.bio = '';
         }
 
         if ('phone' in body) {
             if (typeof body.phone !== 'string') {
-                return res.status(400).json({ message: "Phone number must be text." });
+                return res.status(400).json({ message: "Số điện thoại phải là chuỗi ký tự." });
             }
             const phone = sanitizeText(body.phone);
             if (phone && !PHONE_PATTERN.test(phone)) {
-                return res.status(400).json({ message: "Phone number is not valid." });
+                return res.status(400).json({ message: "Số điện thoại không hợp lệ." });
             }
             if (phone) set.phone = phone; else unset.phone = '';
         }
 
         if ('avatarUrl' in body) {
             if (typeof body.avatarUrl !== 'string') {
-                return res.status(400).json({ message: "Avatar URL must be text." });
+                return res.status(400).json({ message: "Đường dẫn ảnh đại diện phải là chuỗi ký tự." });
             }
             if (body.avatarUrl.trim()) {
                 const avatarUrl = sanitizeAvatarUrl(body.avatarUrl);
                 if (!avatarUrl) {
-                    return res.status(400).json({ message: "Avatar URL must be a valid https link." });
+                    return res.status(400).json({ message: "Ảnh đại diện phải là liên kết https hợp lệ." });
                 }
                 set.avatarUrl = avatarUrl;
             } else {
@@ -90,7 +90,7 @@ export const updateMe = async (req, res) => {
         if (Object.keys(set).length) update.$set = set;
         if (Object.keys(unset).length) update.$unset = unset;
         if (!Object.keys(update).length) {
-            return res.status(400).json({ message: "No profile fields to update." });
+            return res.status(400).json({ message: "Không có thông tin hồ sơ nào để cập nhật." });
         }
 
         const user = await User.findByIdAndUpdate(req.user._id, update, { new: true, runValidators: true })
@@ -98,8 +98,8 @@ export const updateMe = async (req, res) => {
 
         return res.status(200).json({ user });
     } catch (error) {
-        console.error('Error when calling updateMe.', error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Lỗi khi cập nhật hồ sơ:', error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };
 
@@ -112,7 +112,7 @@ export const searchUsers = async (req, res) => {
         const query = sanitizeText(req.query?.q);
         if (query.length < SEARCH_QUERY_MIN_LENGTH || query.length > SEARCH_QUERY_MAX_LENGTH) {
             return res.status(400).json({
-                message: `Search query must be between ${SEARCH_QUERY_MIN_LENGTH} and ${SEARCH_QUERY_MAX_LENGTH} characters.`,
+                message: `Từ khóa tìm kiếm phải dài từ ${SEARCH_QUERY_MIN_LENGTH} đến ${SEARCH_QUERY_MAX_LENGTH} ký tự.`,
             });
         }
 
@@ -150,8 +150,8 @@ export const searchUsers = async (req, res) => {
 
         return res.status(200).json({ users: results });
     } catch (error) {
-        console.error('Error when calling searchUsers.', error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Lỗi khi tìm người dùng:', error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };
 
@@ -161,7 +161,7 @@ export const getUserProfile = async (req, res) => {
     try {
         const { userId } = req.params;
         if (!mongoose.isValidObjectId(userId)) {
-            return res.status(400).json({ message: "A valid user ID is required." });
+            return res.status(400).json({ message: "Mã người dùng không hợp lệ." });
         }
 
         const viewerId = req.user._id.toString();
@@ -171,7 +171,7 @@ export const getUserProfile = async (req, res) => {
             .select(`${PUBLIC_USER_FIELDS} email phone bio createdAt`)
             .lean();
         if (!user) {
-            return res.status(404).json({ message: "User not found." });
+            return res.status(404).json({ message: "Không tìm thấy người dùng." });
         }
 
         const viewerFriendIds = await getFriendIds(viewerId);
@@ -202,7 +202,7 @@ export const getUserProfile = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Error when calling getUserProfile.', error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Lỗi khi lấy hồ sơ người dùng:', error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };

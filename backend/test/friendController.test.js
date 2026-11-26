@@ -26,7 +26,7 @@ test("sendFriendRequest prevents requests to the current user", async () => {
   await sendFriendRequest(req, res);
 
   assert.equal(result.statusCode, 400);
-  assert.match(result.body.message, /yourself/i);
+  assert.match(result.body.message, /tự gửi lời mời/i);
 });
 
 test("sendFriendRequest emits a populated real-time notification", async () => {

@@ -6,12 +6,12 @@ export const socketAuthMiddleware = async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
     if (typeof token !== "string" || !token) {
-      return next(new Error("Authentication error: Token not provided"));
+      return next(new Error("Authentication error: Thiếu mã truy cập"));
     }
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, { algorithms: ["HS256"] });
     if (!decoded) {
-      return next(new Error("Authentication error: Invalid token"));
+      return next(new Error("Authentication error: Mã truy cập không hợp lệ"));
     }
 
     if (!(await isSessionActive(decoded))) {
@@ -21,7 +21,7 @@ export const socketAuthMiddleware = async (socket, next) => {
     const user = await User.findById(decoded.userId).select("-hashPassword");
 
     if (!user) {
-      return next(new Error("Authentication error: User not found"));
+      return next(new Error("Authentication error: Không tìm thấy người dùng"));
     }
 
     socket.user = user;
@@ -30,8 +30,8 @@ export const socketAuthMiddleware = async (socket, next) => {
     next();
   } catch (error) {
     if (error?.name !== "TokenExpiredError") {
-      console.error("Socket authentication error:", error);
+      console.error("Lỗi khi xác thực socket:", error);
     }
-    next(new Error("Unauthorized"));
+    next(new Error("Unauthorized: Không có quyền truy cập"));
   }
 };

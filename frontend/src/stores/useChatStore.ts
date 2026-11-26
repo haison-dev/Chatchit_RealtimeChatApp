@@ -40,7 +40,7 @@ export const useChatStore = create<ChatState>()(
 
           set({ conversations, convoLoading: false });
         } catch (error) {
-          console.error("fetchConversations error:", error);
+          console.error("Lỗi khi tải danh sách cuộc trò chuyện:", error);
           set({ convoLoading: false });
         }
       },
@@ -103,7 +103,7 @@ export const useChatStore = create<ChatState>()(
         const { activeConversationId } = get();
         const { user } = useAuthStore.getState();
         if (!activeConversationId || !user) {
-          throw new Error("An active conversation is required.");
+          throw new Error("Cần mở một cuộc trò chuyện trước.");
         }
 
         const clientMessageId = createClientMessageId();
@@ -157,7 +157,7 @@ export const useChatStore = create<ChatState>()(
       },
       sendGroupMessage: async (conversationId, content, imgUrl) => {
         const { user } = useAuthStore.getState();
-        if (!user) throw new Error("Authentication is required.");
+        if (!user) throw new Error("Cần đăng nhập trước.");
 
         const clientMessageId = createClientMessageId();
         const optimisticMessage: Message = {
@@ -298,7 +298,7 @@ export const useChatStore = create<ChatState>()(
             (participant) => participant._id !== user._id,
           );
           if (conversation.type === "direct" && !recipient) {
-            throw new Error("Direct-message recipient was not found.");
+            throw new Error("Không tìm thấy người nhận tin nhắn.");
           }
 
           const saved = conversation.type === "direct"
@@ -354,7 +354,7 @@ export const useChatStore = create<ChatState>()(
             },
           }));
         } catch (error) {
-          console.error("Unable to resync recent messages", error);
+          console.error("Không thể đồng bộ lại tin nhắn gần đây", error);
         }
       },
       updateConversation: async (conversation) => {

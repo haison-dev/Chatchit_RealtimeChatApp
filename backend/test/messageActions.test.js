@@ -23,7 +23,7 @@ test("message updates reject malformed message IDs before querying MongoDB", asy
   }, res);
 
   assert.equal(res.result.statusCode, 400);
-  assert.match(res.result.body.message, /valid message ID/i);
+  assert.match(res.result.body.message, /mã tin nhắn không hợp lệ/i);
 });
 
 test("message search requires a meaningful query", async () => {
@@ -31,7 +31,7 @@ test("message search requires a meaningful query", async () => {
   await searchMessages({ params: { conversationId: "conversation-1" }, query: { q: "a" } }, res);
 
   assert.equal(res.result.statusCode, 400);
-  assert.match(res.result.body.message, /between 2 and 100/i);
+  assert.match(res.result.body.message, /từ 2 đến 100/i);
 });
 
 test("image upload rejects content whose signature does not match its MIME type", async () => {
@@ -43,7 +43,7 @@ test("image upload rejects content whose signature does not match its MIME type"
   }, res);
 
   assert.equal(res.result.statusCode, 400);
-  assert.match(res.result.body.message, /does not match/i);
+  assert.match(res.result.body.message, /không khớp/i);
 });
 
 test("call records cannot be edited, deleted or reacted to", async () => {
@@ -57,7 +57,7 @@ test("call records cannot be edited, deleted or reacted to", async () => {
       const res = response();
       await action(request, res);
       assert.equal(res.result.statusCode, 409);
-      assert.match(res.result.body.message, /call records/i);
+      assert.match(res.result.body.message, /bản ghi cuộc gọi/i);
     }
   } finally {
     Message.findById = originals.findById;

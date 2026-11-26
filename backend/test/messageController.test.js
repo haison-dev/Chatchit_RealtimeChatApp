@@ -29,7 +29,7 @@ test("sendGroupMessage requires a client-generated idempotency key", async () =>
   await sendGroupMessage(req, res);
 
   assert.equal(res.result.statusCode, 400);
-  assert.match(res.result.body.message, /client message ID/i);
+  assert.match(res.result.body.message, /mã tin nhắn phía client/i);
 });
 
 test("sendGroupMessage returns an existing message for an idempotent retry", async () => {

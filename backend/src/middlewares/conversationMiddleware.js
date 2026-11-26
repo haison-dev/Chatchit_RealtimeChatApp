@@ -9,7 +9,7 @@ export const requireConversationMember = async (req, res, next) => {
     const conversationId = getConversationId(req);
 
     if (!conversationId || !mongoose.isValidObjectId(conversationId)) {
-      return res.status(400).json({ message: "A valid conversation ID is required." });
+      return res.status(400).json({ message: "Mã cuộc trò chuyện không hợp lệ." });
     }
 
     const conversation = await Conversation.findOne({
@@ -18,20 +18,20 @@ export const requireConversationMember = async (req, res, next) => {
     });
 
     if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found." });
+      return res.status(404).json({ message: "Không tìm thấy cuộc trò chuyện." });
     }
 
     req.conversation = conversation;
     return next();
   } catch (error) {
-    console.error("Conversation authorization error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi kiểm tra quyền vào cuộc trò chuyện:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
 export const requireGroupMember = (req, res, next) => {
   if (req.conversation?.type !== "group") {
-    return res.status(400).json({ message: "A group conversation is required." });
+    return res.status(400).json({ message: "Thao tác này chỉ dùng cho nhóm chat." });
   }
 
   return next();
@@ -39,7 +39,7 @@ export const requireGroupMember = (req, res, next) => {
 
 export const requireGroupAdmin = (req, res, next) => {
   if (req.conversation?.type !== "group") {
-    return res.status(400).json({ message: "A group conversation is required." });
+    return res.status(400).json({ message: "Thao tác này chỉ dùng cho nhóm chat." });
   }
 
   const userId = req.user._id.toString();
@@ -47,7 +47,7 @@ export const requireGroupAdmin = (req, res, next) => {
   const isLegacyOwner = adminIds.length === 0 && req.conversation.group?.createdBy?.toString() === userId;
 
   if (!adminIds.includes(userId) && !isLegacyOwner) {
-    return res.status(403).json({ message: "Group administrator access is required." });
+    return res.status(403).json({ message: "Chỉ quản trị viên nhóm mới làm được thao tác này." });
   }
 
   return next();

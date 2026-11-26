@@ -9,7 +9,7 @@ export const CALL_ACK_TIMEOUT_MS = 8000;
 /** Asks for the microphone, and the camera for video calls. Rejects with the browser's error. */
 export const getLocalStream = (kind: CallKind): Promise<MediaStream> => {
   if (!navigator.mediaDevices?.getUserMedia) {
-    return Promise.reject(new DOMException("Media devices are unavailable.", "NotSupportedError"));
+    return Promise.reject(new DOMException("Thiết bị không hỗ trợ micro hoặc camera.", "NotSupportedError"));
   }
   return navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: true, noiseSuppression: true },

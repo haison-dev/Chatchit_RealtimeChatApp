@@ -9,7 +9,7 @@ router.get("/images/:imageId", getImage);
 
 router.use((error, _req, res, next) => {
   if (error?.type === "entity.too.large") {
-    return res.status(413).json({ message: "Image must not exceed 5 MB." });
+    return res.status(413).json({ message: "Ảnh không được lớn hơn 5 MB." });
   }
   return next(error);
 });

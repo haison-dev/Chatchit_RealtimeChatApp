@@ -61,7 +61,7 @@ const isConversationId = (value) => typeof value === "string" && /^[a-f\d]{24}$/
 io.on("connection", async (socket) => {
   const user = socket.user;
   const userId = user._id.toString();
-  console.log(`${user.displayName} online with socket ${socket.id}`);
+  console.log(`${user.displayName} đã online với socket ${socket.id}`);
   const allowEvent = createEventLimiter(20, 5);
 
   const userSockets = onlineUsers.get(userId) ?? new Set();
@@ -78,7 +78,7 @@ io.on("connection", async (socket) => {
   socket.on("join-conversation", async (conversationId, acknowledge) => {
     if (typeof acknowledge !== "function") acknowledge = undefined;
     if (!isConversationId(conversationId) || !allowEvent()) {
-      return acknowledge?.({ ok: false, message: "Unable to join conversation." });
+      return acknowledge?.({ ok: false, message: "Không thể vào cuộc trò chuyện." });
     }
     try {
       const authorization = await authorizeConversationJoin(user._id, conversationId);
@@ -89,8 +89,8 @@ io.on("connection", async (socket) => {
       await socket.join(conversationId);
       return acknowledge?.(authorization);
     } catch (error) {
-      console.error("Join conversation error:", error);
-      return acknowledge?.({ ok: false, message: "Unable to join conversation." });
+      console.error("Lỗi khi vào cuộc trò chuyện:", error);
+      return acknowledge?.({ ok: false, message: "Không thể vào cuộc trò chuyện." });
     }
   });
 
@@ -136,7 +136,7 @@ io.on("connection", async (socket) => {
       onlineUsers.delete(userId);
     }
     broadcastOnlineUsers();
-    console.log(`socket disconnected: ${socket.id}`);
+    console.log(`Socket đã ngắt kết nối: ${socket.id}`);
   });
 });
 

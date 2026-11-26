@@ -12,18 +12,18 @@ export const sendFriendRequest = async (req, res) => {
         const from = req.user._id;
 
         if (typeof to !== "string" || !mongoose.isValidObjectId(to)) {
-            return res.status(400).json({ message: "A valid recipient ID is required." });
+            return res.status(400).json({ message: "Người nhận không hợp lệ." });
         }
 
         const requestMessage = sanitizeText(message, { multiline: true });
         if (requestMessage.length > FRIEND_REQUEST_MESSAGE_MAX_LENGTH) {
-            return res.status(400).json({ message: `Message must not exceed ${FRIEND_REQUEST_MESSAGE_MAX_LENGTH} characters.` });
+            return res.status(400).json({ message: `Lời nhắn không được quá ${FRIEND_REQUEST_MESSAGE_MAX_LENGTH} ký tự.` });
         }
 
         if (from.toString() === to?.toString()) {
             return res
                 .status(400)
-                .json({ message: "You cannot send a friend request to yourself." });
+                .json({ message: "Bạn không thể tự gửi lời mời kết bạn cho mình." });
         }
 
         const userExists = await User.exists({ _id: to });
@@ -31,7 +31,7 @@ export const sendFriendRequest = async (req, res) => {
         if (!userExists) {
             return res
                 .status(404)
-                .json({ message: "The user you are trying to add does not exist." });
+                .json({ message: "Người bạn muốn thêm không tồn tại." });
         }
 
         const [userA, userB] = friendPair(from, to);
@@ -49,7 +49,7 @@ export const sendFriendRequest = async (req, res) => {
         if (alreadyFriends) {
             return res
                 .status(400)
-                .json({ message: "You are already friends with this user." });
+                .json({ message: "Hai bạn đã là bạn bè." });
         }
 
         if (existingRequest) {
@@ -76,10 +76,10 @@ export const sendFriendRequest = async (req, res) => {
 
         return res
             .status(200)
-            .json({ message: "Friend request sent successfully.", request });
+            .json({ message: "Đã gửi lời mời kết bạn.", request });
     } catch (error) {
-        console.error("Error adding friend:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi gửi lời mời kết bạn:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };
 
@@ -91,14 +91,14 @@ export const acceptFriendRequest = async (req, res) => {
         const request = await FriendRequest.findById(requestId);
 
         if (!request) {
-            return res.status(404).json({ message: "Friend request not found." });
+            return res.status(404).json({ message: "Không tìm thấy lời mời kết bạn." });
         }
 
         if (request.to.toString() !== userId.toString()) {
             return res
                 .status(403)
                 .json({
-                    message: "You are not authorized to accept this friend request.",
+                    message: "Bạn không có quyền chấp nhận lời mời kết bạn này.",
                 });
         }
 
@@ -127,7 +127,7 @@ export const acceptFriendRequest = async (req, res) => {
         });
 
         return res.status(200).json({
-            message: "Friend request accepted.",
+            message: "Đã chấp nhận lời mời kết bạn.",
             newFriend: {
                 _id: from?._id,
                 displayName: from?.displayName,
@@ -135,8 +135,8 @@ export const acceptFriendRequest = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error accepting friend request:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi chấp nhận lời mời kết bạn:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };
 
@@ -148,14 +148,14 @@ export const declineFriendRequest = async (req, res) => {
         const request = await FriendRequest.findById(requestId);
 
         if (!request) {
-            return res.status(404).json({ message: "Friend request not found." });
+            return res.status(404).json({ message: "Không tìm thấy lời mời kết bạn." });
         }
 
         if (request.to.toString() !== userId.toString()) {
             return res
                 .status(403)
                 .json({
-                    message: "You are not authorized to decline this friend request.",
+                    message: "Bạn không có quyền từ chối lời mời kết bạn này.",
                 });
         }
 
@@ -164,10 +164,10 @@ export const declineFriendRequest = async (req, res) => {
         io.to(request.from.toString()).emit("friend-request:declined", { requestId });
         io.to(request.to.toString()).emit("friend-request:declined", { requestId });
 
-        return res.status(204).json({ message: "Friend request declined." });
+        return res.status(204).json({ message: "Đã từ chối lời mời kết bạn." });
     } catch (error) {
-        console.error("Error declining friend request:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi từ chối lời mời kết bạn:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };
 
@@ -178,13 +178,13 @@ export const removeFriend = async (req, res) => {
         const userId = req.user._id.toString();
 
         if (!mongoose.isValidObjectId(friendId) || friendId === userId) {
-            return res.status(400).json({ message: "A valid friend ID is required." });
+            return res.status(400).json({ message: "Mã bạn bè không hợp lệ." });
         }
 
         const [userA, userB] = friendPair(userId, friendId);
         const removed = await Friend.findOneAndDelete({ userA, userB });
         if (!removed) {
-            return res.status(404).json({ message: "You are not friends with this user." });
+            return res.status(404).json({ message: "Bạn chưa kết bạn với người này." });
         }
 
         // Each side learns the id of the other person so both lists update.
@@ -193,8 +193,8 @@ export const removeFriend = async (req, res) => {
 
         return res.status(204).send();
     } catch (error) {
-        console.error("Error removing friend:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi hủy kết bạn:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };
 
@@ -222,8 +222,8 @@ export const getAllFriends = async (req, res) => {
         return res.status(200).json({ friends });
 
     } catch (error) {
-        console.error("Error retrieving friends list:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi lấy danh sách bạn bè:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };
 
@@ -242,7 +242,7 @@ export const getAllFriendRequests = async (req, res) => {
         res.status(200).json({ sent, received });
 
     } catch (error) {
-        console.error("Error retrieving friend requests:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi lấy danh sách lời mời kết bạn:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 };

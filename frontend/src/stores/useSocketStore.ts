@@ -34,7 +34,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     set({ socket });
 
     socket.on("connect", async () => {
-      console.log("Connected to socket");
+      console.log("Đã kết nối socket");
       set({ isConnected: true });
 
       const chatStore = useChatStore.getState();

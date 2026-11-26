@@ -48,7 +48,7 @@ export const signUp = async (req, res) => {
         const { username, password, email, firstName, lastName } = req.body;
 
         if ([username, password, email, firstName, lastName].some((value) => typeof value !== 'string' || !value.trim())) {
-            return res.status(400).json({ message: "All fields are required" });
+            return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin." });
         }
 
         const normalizedUsername = username.trim().toLowerCase();
@@ -57,23 +57,23 @@ export const signUp = async (req, res) => {
         const normalizedLastName = sanitizeText(lastName);
 
         if (!USERNAME_PATTERN.test(normalizedUsername)) {
-            return res.status(400).json({ message: "Username must be 3-30 characters and contain only letters, numbers, dots, underscores, or hyphens." });
+            return res.status(400).json({ message: "Tên đăng nhập phải dài 3-30 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang." });
         }
 
         if (!EMAIL_PATTERN.test(normalizedEmail) || normalizedEmail.length > 254) {
-            return res.status(400).json({ message: "A valid email address is required." });
+            return res.status(400).json({ message: "Email không hợp lệ." });
         }
 
         if (typeof password !== 'string' || password.length < 6 || password.length > 72) {
-            return res.status(400).json({ message: "Password must be between 6 and 72 characters." });
+            return res.status(400).json({ message: "Mật khẩu phải dài từ 6 đến 72 ký tự." });
         }
 
         if (!normalizedFirstName || !normalizedLastName) {
-            return res.status(400).json({ message: "First and last names are required." });
+            return res.status(400).json({ message: "Vui lòng nhập họ và tên." });
         }
 
         if (normalizedFirstName.length > PERSON_NAME_MAX_LENGTH || normalizedLastName.length > PERSON_NAME_MAX_LENGTH) {
-            return res.status(400).json({ message: `First and last names must not exceed ${PERSON_NAME_MAX_LENGTH} characters.` });
+            return res.status(400).json({ message: `Họ và tên không được quá ${PERSON_NAME_MAX_LENGTH} ký tự mỗi phần.` });
         }
 
         //check if user exists
@@ -86,7 +86,7 @@ export const signUp = async (req, res) => {
             return res.status(409).json({
                 code: 'ACCOUNT_ALREADY_EXISTS',
                 field,
-                message: `${field === 'username' ? 'Username' : 'Email'} already exists`,
+                message: `${field === 'username' ? 'Tên đăng nhập' : 'Email'} đã được sử dụng`,
             });
         }
 
@@ -105,16 +105,16 @@ export const signUp = async (req, res) => {
         return res.sendStatus(204);
 
     } catch (error) {
-        console.error('signUp error', error);
+        console.error('Lỗi khi đăng ký:', error);
         if (error?.code === 11000) {
             const field = Object.keys(error.keyPattern ?? {})[0] ?? 'account';
             return res.status(409).json({
                 code: 'ACCOUNT_ALREADY_EXISTS',
                 field,
-                message: `${field === 'email' ? 'Email' : 'Username'} already exists`,
+                message: `${field === 'email' ? 'Email' : 'Tên đăng nhập'} đã được sử dụng`,
             });
         }
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
 
     }
 }
@@ -125,19 +125,19 @@ export const signIn = async (req, res) => {
         const { username, password } = req.body;
 
         if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password || username.length > 30 || password.length > 72) {
-            return res.status(400).json({ message: "All fields are required" });
+            return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin." });
         }
         //get hash password from db
         const user = await User.findOne({ username: username.trim().toLowerCase() });
 
         if (!user) {
-            return res.status(401).json({ message: "username or password is incorrect" });
+            return res.status(401).json({ message: "Tên đăng nhập hoặc mật khẩu không đúng." });
         }
 
         const passwordCorrect = await bcrypt.compare(password, user.hashPassword);
 
         if (!passwordCorrect) {
-            return res.status(401).json({ message: "username or password is incorrect" });
+            return res.status(401).json({ message: "Tên đăng nhập hoặc mật khẩu không đúng." });
         }
 
         //refresh token 
@@ -161,10 +161,10 @@ export const signIn = async (req, res) => {
         });
 
         //return jwt token in response body
-        return res.status(200).json({ message: `User ${user.displayName} signed in successfully`, accessToken });
+        return res.status(200).json({ message: `${user.displayName} đã đăng nhập thành công`, accessToken });
     } catch (error) {
-        console.error('signIn error', error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Lỗi khi đăng nhập:', error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 }
 
@@ -181,8 +181,8 @@ export const signOut = async (req, res) => {
         }
         return res.sendStatus(204);
     } catch (error) {
-        console.error('signOut error', error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Lỗi khi đăng xuất:', error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 }
 
@@ -192,7 +192,7 @@ export const refreshToken = async (req, res) => {
         //get refresh token from cookie
         const token = req.cookies?.refreshToken;
         if (!token) {
-            return res.status(401).json({ message: "Token is not available" });
+            return res.status(401).json({ message: "Không tìm thấy phiên đăng nhập" });
         }
         //compare refresh token in db
         const tokenHash = hashToken(token);
@@ -204,14 +204,14 @@ export const refreshToken = async (req, res) => {
                 // The browser already received the new cookie from the winning request.
                 return res.status(200).json({ accessToken: createAccessToken(rotated.userId, rotated._id) });
             }
-            return res.status(403).json({ message: "Invalid token or expire" })
+            return res.status(403).json({ message: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn" })
         }
 
         //check expires
         if (session.expiresAt < new Date()) {
             await session.deleteOne();
             res.clearCookie('refreshToken', refreshCookieOptions());
-            return res.status(403).json({ message: "Token has expired" })
+            return res.status(403).json({ message: "Phiên đăng nhập đã hết hạn" })
         }
         // Rotate the refresh token so a previously used token cannot be replayed.
         const nextRefreshToken = crypto.randomBytes(64).toString('hex');
@@ -230,7 +230,7 @@ export const refreshToken = async (req, res) => {
                 return res.status(200).json({ accessToken: createAccessToken(rotated.userId, rotated._id) });
             }
             res.clearCookie('refreshToken', refreshCookieOptions());
-            return res.status(403).json({ message: "Refresh token has already been used" });
+            return res.status(403).json({ message: "Phiên đăng nhập đã được dùng ở nơi khác" });
         }
 
         res.cookie('refreshToken', nextRefreshToken, {
@@ -243,7 +243,7 @@ export const refreshToken = async (req, res) => {
         //return
         return res.status(200).json({ accessToken });
     } catch (error) {
-        console.error("refreshToken error", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi làm mới phiên đăng nhập:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
     }
 }

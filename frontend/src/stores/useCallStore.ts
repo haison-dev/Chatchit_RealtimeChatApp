@@ -220,7 +220,7 @@ export const useCallStore = create<CallState>((set, get) => {
         await pc.setLocalDescription(offer);
         sendSignal("offer", pc.localDescription?.toJSON());
       } catch (error) {
-        console.error("Error creating call offer:", error);
+        console.error("Lỗi khi tạo lời mời cuộc gọi:", error);
         failCall("Không thể thiết lập cuộc gọi.");
       }
     },
@@ -244,7 +244,7 @@ export const useCallStore = create<CallState>((set, get) => {
           pendingCandidates.push(data as RTCIceCandidateInit); // arrived before the offer/answer
         }
       } catch (error) {
-        console.error("Error handling call signal:", error);
+        console.error("Lỗi khi xử lý tín hiệu cuộc gọi:", error);
         failCall("Không thể thiết lập cuộc gọi.");
       }
     },

@@ -23,7 +23,7 @@ export const useFriendStore = create<FriendState>((set) => ({
       const { received, sent } = await friendService.getAllFriendRequests();
       set({ receivedList: received, sentList: sent });
     } catch (error) {
-      console.error("Unable to load friend requests", error);
+      console.error("Không thể tải lời mời kết bạn", error);
     } finally {
       set({ loading: false });
     }
@@ -62,7 +62,7 @@ export const useFriendStore = create<FriendState>((set) => ({
       const friends = await friendService.getFriendList();
       set({ friends });
     } catch (error) {
-      console.error("Unable to load friends", error);
+      console.error("Không thể tải danh sách bạn bè", error);
       set({ friends: [] });
     } finally {
       set({ loading: false });

@@ -18,10 +18,10 @@ const loadAuthorizedMessage = async (messageId, userId) => {
 };
 
 const respondLoadError = (res, error) => res.status(error).json({
-  message: error === 400 ? "A valid message ID is required." : "Message not found.",
+  message: error === 400 ? "Mã tin nhắn không hợp lệ." : "Không tìm thấy tin nhắn.",
 });
 
-const CALL_RECORD_LOCKED = { message: "Call records cannot be changed." };
+const CALL_RECORD_LOCKED = { message: "Không thể thay đổi bản ghi cuộc gọi." };
 
 const emitMessageUpdate = (message) => {
   io.to(message.conversationId.toString()).emit("message-updated", message);
@@ -33,13 +33,13 @@ export const updateMessage = async (req, res) => {
     if (loaded.error) return respondLoadError(res, loaded.error);
     const { message, conversation } = loaded;
     if (message.senderId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "You can only edit your own messages." });
+      return res.status(403).json({ message: "Bạn chỉ có thể sửa tin nhắn của mình." });
     }
     if (message.call) return res.status(409).json(CALL_RECORD_LOCKED);
-    if (message.deletedAt) return res.status(409).json({ message: "Deleted messages cannot be edited." });
+    if (message.deletedAt) return res.status(409).json({ message: "Không thể sửa tin nhắn đã xóa." });
     const content = sanitizeText(req.body?.content, { multiline: true });
     if (!content || content.length > MESSAGE_MAX_LENGTH) {
-      return res.status(400).json({ message: `Message content must be between 1 and ${MESSAGE_MAX_LENGTH} characters.` });
+      return res.status(400).json({ message: `Nội dung tin nhắn phải dài từ 1 đến ${MESSAGE_MAX_LENGTH} ký tự.` });
     }
 
     message.content = content;
@@ -52,8 +52,8 @@ export const updateMessage = async (req, res) => {
     emitMessageUpdate(message);
     return res.status(200).json({ message });
   } catch (error) {
-    console.error("Error editing message:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi sửa tin nhắn:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -68,7 +68,7 @@ export const deleteMessage = async (req, res) => {
     const legacyAdmin = admins.length === 0 && conversation.group?.createdBy?.toString() === userId;
     const canModerate = conversation.type === "group" && (admins.includes(userId) || legacyAdmin);
     if (message.senderId.toString() !== userId && !canModerate) {
-      return res.status(403).json({ message: "You cannot delete this message." });
+      return res.status(403).json({ message: "Bạn không thể xóa tin nhắn này." });
     }
 
     message.content = null;
@@ -83,8 +83,8 @@ export const deleteMessage = async (req, res) => {
     emitMessageUpdate(message);
     return res.status(200).json({ message });
   } catch (error) {
-    console.error("Error deleting message:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi xóa tin nhắn:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -94,10 +94,10 @@ export const toggleReaction = async (req, res) => {
     if (loaded.error) return respondLoadError(res, loaded.error);
     const { message } = loaded;
     if (message.call) return res.status(409).json(CALL_RECORD_LOCKED);
-    if (message.deletedAt) return res.status(409).json({ message: "Deleted messages cannot be reacted to." });
+    if (message.deletedAt) return res.status(409).json({ message: "Không thể thả cảm xúc vào tin nhắn đã xóa." });
     const emoji = typeof req.body?.emoji === "string" ? req.body.emoji.trim() : "";
     if (emoji.length > 16 || (emoji && !/\p{Extended_Pictographic}/u.test(emoji))) {
-      return res.status(400).json({ message: "Reaction must be a valid emoji." });
+      return res.status(400).json({ message: "Cảm xúc phải là một emoji hợp lệ." });
     }
 
     const userId = req.user._id.toString();
@@ -107,8 +107,8 @@ export const toggleReaction = async (req, res) => {
     emitMessageUpdate(message);
     return res.status(200).json({ message });
   } catch (error) {
-    console.error("Error updating reaction:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi cập nhật cảm xúc:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -116,7 +116,7 @@ export const searchMessages = async (req, res) => {
   try {
     const query = sanitizeText(req.query?.q);
     if (query.length < SEARCH_QUERY_MIN_LENGTH || query.length > SEARCH_QUERY_MAX_LENGTH) {
-      return res.status(400).json({ message: "Search query must be between 2 and 100 characters." });
+      return res.status(400).json({ message: "Từ khóa tìm kiếm phải dài từ 2 đến 100 ký tự." });
     }
     const escaped = escapeRegex(query);
     const messages = await Message.find(withClearedAtFilter({
@@ -126,7 +126,7 @@ export const searchMessages = async (req, res) => {
     }, req.conversation, req.user._id)).sort({ createdAt: -1 }).limit(50).lean();
     return res.status(200).json({ messages });
   } catch (error) {
-    console.error("Error searching messages:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi tìm tin nhắn:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };

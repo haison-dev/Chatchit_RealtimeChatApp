@@ -54,12 +54,12 @@ test("sanitizeAvatarUrl only accepts clean https URLs", () => {
 
 test("updateMe rejects invalid fields and empty updates", async () => {
   const cases = [
-    [{ displayName: "   " }, /display name/i],
-    [{ bio: "x".repeat(501) }, /bio/i],
-    [{ phone: "abc" }, /phone/i],
+    [{ displayName: "   " }, /tên hiển thị/i],
+    [{ bio: "x".repeat(501) }, /giới thiệu/i],
+    [{ phone: "abc" }, /số điện thoại/i],
     [{ avatarUrl: "http://insecure.example/a.png" }, /https/i],
-    [{ bio: { $ne: "" } }, /text/i],
-    [{ unknown: "x" }, /no profile fields/i],
+    [{ bio: { $ne: "" } }, /chuỗi ký tự/i],
+    [{ unknown: "x" }, /không có thông tin hồ sơ/i],
   ];
   for (const [body, pattern] of cases) {
     const res = createRes();

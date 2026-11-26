@@ -20,7 +20,7 @@ const isPlainObject = (value) => value !== null && typeof value === "object" && 
 export const createCallHandlers = (io, { recordCall = recordCallMessage } = {}) => {
   const emitEnded = (call, reason) => {
     // The conversation keeps a record of every call that ended (duration, missed, rejected, ...).
-    Promise.resolve(recordCall(io, call, reason)).catch((error) => console.error("Error saving call message:", error));
+    Promise.resolve(recordCall(io, call, reason)).catch((error) => console.error("Lỗi khi lưu lịch sử cuộc gọi:", error));
     const payload = { callId: call.id, reason };
     io.to(call.callerSocketId).emit("call:ended", payload);
     // Before anyone accepted, every device of the callee is ringing.
@@ -42,7 +42,7 @@ export const createCallHandlers = (io, { recordCall = recordCallMessage } = {}) 
       try {
         return await handler(args[0], acknowledge);
       } catch (error) {
-        console.error("Error in call handler:", error);
+        console.error("Lỗi khi xử lý cuộc gọi:", error);
         return acknowledge({ ok: false, reason: "error" });
       }
     };

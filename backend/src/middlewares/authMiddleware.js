@@ -11,7 +11,7 @@ export const protectedRoute = async (req, res, next) => {
       : null;
 
     if (!token) {
-      return res.status(401).json({ message: "Access token is missing" });
+      return res.status(401).json({ message: "Thiếu mã truy cập" });
     }
 
     let decoded;
@@ -19,7 +19,7 @@ export const protectedRoute = async (req, res, next) => {
       decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, { algorithms: ["HS256"] });
     } catch {
       // 403 tells the client to refresh its access token.
-      return res.status(403).json({ message: "Access token expired or invalid" });
+      return res.status(403).json({ message: "Mã truy cập đã hết hạn hoặc không hợp lệ" });
     }
 
     // Phiên đã kết thúc (đăng xuất, hoặc bị admin đăng xuất): token mất hiệu lực ngay.
@@ -31,7 +31,7 @@ export const protectedRoute = async (req, res, next) => {
     const user = await User.findById(decoded.userId).select("-hashPassword");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
     }
 
     //return user info in req.user
@@ -39,7 +39,7 @@ export const protectedRoute = async (req, res, next) => {
     req.sessionId = typeof decoded.sid === "string" ? decoded.sid : null;
     return next();
   } catch (error) {
-    console.error("Verify JWT error in authMiddleware", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi xác thực access token:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };

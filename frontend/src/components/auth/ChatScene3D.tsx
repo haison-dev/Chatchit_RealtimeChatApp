@@ -27,7 +27,7 @@ const ChatScene3D = ({ onMessageArrive, onError }: ChatScene3DProps) => {
       const scene = createChatScene(host, { onMessageArrive: (receiver) => arriveRef.current?.(receiver) });
       return () => scene.dispose();
     } catch (error) {
-      console.error("Unable to start the 3D scene", error);
+      console.error("Không thể khởi động cảnh 3D", error);
       errorRef.current?.();
     }
   }, []);

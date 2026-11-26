@@ -24,7 +24,7 @@ test("conversation API rejects malformed conversation IDs", async () => {
   const response = await request(createApp()).get("/api/conversations/not-valid/messages");
 
   assert.equal(response.status, 400);
-  assert.match(response.body.message, /valid conversation ID/i);
+  assert.match(response.body.message, /mã cuộc trò chuyện không hợp lệ/i);
 });
 
 test("conversation API hides message history from non-members", async () => {

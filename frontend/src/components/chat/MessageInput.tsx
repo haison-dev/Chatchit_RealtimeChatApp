@@ -78,7 +78,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
 
       if (selectedConvo.type === "direct") {
         const recipient = selectedConvo.participants.find((participant) => participant._id !== userId);
-        if (!recipient) throw new Error("Message recipient not found.");
+        if (!recipient) throw new Error("Không tìm thấy người nhận tin nhắn.");
         await sendDirectMessage(recipient._id, cleanValue, imageUrl);
       } else {
         await sendGroupMessage(selectedConvo._id, cleanValue, imageUrl);

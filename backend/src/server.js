@@ -50,18 +50,18 @@ app.use('/api/uploads', uploadRoute);
 app.use('/api/admin', adminRoute);
 
 app.use((_req, res) => {
-    res.status(404).json({ message: 'Not found' });
+    res.status(404).json({ message: 'Không tìm thấy' });
 });
 
 // Last-resort handler: never leak stack traces to clients.
 app.use((error, _req, res, _next) => {
-    console.error('Unhandled request error:', error);
+    console.error('Lỗi chưa được xử lý khi xử lý yêu cầu:', error);
     if (res.headersSent) return res.end();
-    return res.status(error?.status ?? 500).json({ message: 'Internal server error' });
+    return res.status(error?.status ?? 500).json({ message: 'Lỗi máy chủ. Vui lòng thử lại sau.' });
 });
 
 connectDB().then(() => {
     server.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        console.log(`Máy chủ đang chạy ở cổng ${PORT}`);
     });
 })

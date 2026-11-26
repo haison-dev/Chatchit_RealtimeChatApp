@@ -20,10 +20,10 @@ export const uploadImage = async (req, res) => {
   try {
     const contentType = req.headers["content-type"]?.split(";")[0];
     if (!allowedTypes.has(contentType) || !Buffer.isBuffer(req.body) || req.body.length === 0) {
-      return res.status(400).json({ message: "Only JPEG, PNG, GIF, and WebP images are supported." });
+      return res.status(400).json({ message: "Chỉ hỗ trợ ảnh JPEG, PNG, GIF và WebP." });
     }
     if (!matchesSignature(req.body, contentType)) {
-      return res.status(400).json({ message: "File content does not match its image type." });
+      return res.status(400).json({ message: "Nội dung tệp không khớp với định dạng ảnh." });
     }
 
     const stream = getBucket().openUploadStream(`message-${Date.now()}`, {
@@ -37,19 +37,19 @@ export const uploadImage = async (req, res) => {
     });
     return res.status(201).json({ imageUrl: `/uploads/images/${stream.id}` });
   } catch (error) {
-    console.error("Error uploading image:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi tải ảnh lên:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
 export const getImage = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.imageId)) {
-      return res.status(400).json({ message: "A valid image ID is required." });
+      return res.status(400).json({ message: "Mã ảnh không hợp lệ." });
     }
     const imageId = new mongoose.Types.ObjectId(req.params.imageId);
     const file = await getBucket().find({ _id: imageId }).next();
-    if (!file) return res.status(404).json({ message: "Image not found." });
+    if (!file) return res.status(404).json({ message: "Không tìm thấy ảnh." });
 
     const isUploader = file.metadata?.uploadedBy === req.user._id.toString();
     if (!isUploader) {
@@ -59,7 +59,7 @@ export const getImage = async (req, res) => {
         _id: message.conversationId,
         "participants.userId": req.user._id,
       });
-      if (!canView) return res.status(404).json({ message: "Image not found." });
+      if (!canView) return res.status(404).json({ message: "Không tìm thấy ảnh." });
     }
 
     res.setHeader("Content-Type", file.contentType);
@@ -68,7 +68,7 @@ export const getImage = async (req, res) => {
       .on("error", () => res.destroy())
       .pipe(res);
   } catch (error) {
-    console.error("Error reading image:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi đọc ảnh:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };

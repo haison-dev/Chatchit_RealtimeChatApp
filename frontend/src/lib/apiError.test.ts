@@ -6,14 +6,14 @@ describe("getApiErrorMessage", () => {
   it("returns the API message for an Axios error", () => {
     const error = new axios.AxiosError("Conflict");
     error.response = {
-      data: { message: "Username already exists" },
+      data: { message: "Tên đăng nhập đã được sử dụng" },
       status: 409,
       statusText: "Conflict",
       headers: {},
       config: { headers: new axios.AxiosHeaders() },
     };
 
-    expect(getApiErrorMessage(error, "Fallback")).toBe("Username already exists");
+    expect(getApiErrorMessage(error, "Fallback")).toBe("Tên đăng nhập đã được sử dụng");
   });
 
   it("returns the fallback for unknown errors", () => {

@@ -16,7 +16,7 @@ export const createConversation = async (req, res) => {
     const userId = req.user._id;
 
     if (!['direct', 'group'].includes(type) || !Array.isArray(memberIds) || memberIds.length === 0) {
-      return res.status(400).json({ message: "A valid type and member list are required." });
+      return res.status(400).json({ message: "Cần có loại cuộc trò chuyện và danh sách thành viên hợp lệ." });
     }
 
     const uniqueMemberIds = [...new Set(memberIds.map(String))].filter(
@@ -24,19 +24,19 @@ export const createConversation = async (req, res) => {
     );
 
     if (uniqueMemberIds.length !== memberIds.length) {
-      return res.status(400).json({ message: "Member IDs must be unique and cannot include yourself." });
+      return res.status(400).json({ message: "Danh sách thành viên không được trùng và không được có chính bạn." });
     }
 
     if (type === "direct" && uniqueMemberIds.length !== 1) {
-      return res.status(400).json({ message: "A direct conversation requires exactly one recipient." });
+      return res.status(400).json({ message: "Cuộc trò chuyện riêng chỉ có đúng một người nhận." });
     }
 
     if (type === "group" && (!name || uniqueMemberIds.length === 0)) {
-      return res.status(400).json({ message: "Group name and member list are required." });
+      return res.status(400).json({ message: "Cần có tên nhóm và danh sách thành viên." });
     }
 
     if (name.length > GROUP_NAME_MAX_LENGTH) {
-      return res.status(400).json({ message: `Group name must not exceed ${GROUP_NAME_MAX_LENGTH} characters.` });
+      return res.status(400).json({ message: `Tên nhóm không được quá ${GROUP_NAME_MAX_LENGTH} ký tự.` });
     }
 
     let conversation;
@@ -74,7 +74,7 @@ export const createConversation = async (req, res) => {
     if (!conversation) {
       return res
         .status(400)
-        .json({ message: "Conversation type is not valid." });
+        .json({ message: "Loại cuộc trò chuyện không hợp lệ." });
     }
 
     await conversation.populate([
@@ -96,8 +96,8 @@ export const createConversation = async (req, res) => {
 
     return res.status(201).json({ conversation: formatted});
   } catch (error) {
-    console.error("Error creating conversation:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi tạo cuộc trò chuyện:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -125,8 +125,8 @@ export const getConversations = async (req, res) => {
     const formatted = conversations.map((conv) => formatConversation(conv));
     return res.status(200).json({ conversations: formatted });
   } catch (error) {
-    console.error("Error getting conversations:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi lấy danh sách cuộc trò chuyện:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -137,18 +137,18 @@ export const getMessages = async (req, res) => {
     const parsedLimit = Number(limit);
 
     if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 100) {
-      return res.status(400).json({ message: "Limit must be an integer between 1 and 100." });
+      return res.status(400).json({ message: "Số lượng phải là số nguyên từ 1 đến 100." });
     }
 
     const query = { conversationId };
 
     if (cursor) {
       if (typeof cursor !== "string") {
-        return res.status(400).json({ message: "Cursor must be a valid date." });
+        return res.status(400).json({ message: "Mốc phân trang phải là ngày hợp lệ." });
       }
       const cursorDate = new Date(cursor);
       if (Number.isNaN(cursorDate.getTime())) {
-        return res.status(400).json({ message: "Cursor must be a valid date." });
+        return res.status(400).json({ message: "Mốc phân trang phải là ngày hợp lệ." });
       }
       query.createdAt = { $lt: cursorDate };
     }
@@ -168,8 +168,8 @@ export const getMessages = async (req, res) => {
 
     return res.status(200).json({ messages, nextCursor });
   } catch (error) {
-    console.error("Error getting messages:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi lấy tin nhắn:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -177,7 +177,7 @@ export const getMessages = async (req, res) => {
 export const deleteConversation = async (req, res) => {
   try {
     if (req.conversation.type !== "direct") {
-      return res.status(400).json({ message: "Use the leave-group action for group conversations." });
+      return res.status(400).json({ message: "Với nhóm chat, hãy dùng chức năng rời nhóm." });
     }
 
     const userId = req.user._id;
@@ -194,8 +194,8 @@ export const deleteConversation = async (req, res) => {
 
     return res.status(204).send();
   } catch (error) {
-    console.error("Error deleting conversation:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi xóa cuộc trò chuyện:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -208,7 +208,7 @@ export const getUserConversationsForSokectIO = async (userId) => {
 
     return conversations.map((c) => c._id.toString());
   } catch (error) {
-    console.error("Fetch conversations error:", error);
+    console.error("Lỗi khi lấy cuộc trò chuyện cho socket:", error);
     return [];
   }
 };
@@ -223,13 +223,13 @@ export const markAsSeen = async (req, res) => {
     const last = conversation.lastMessage;
 
     if (!last) {
-      return res.status(200).json({ message: "No messages to mark as seen" });
+      return res.status(200).json({ message: "Không có tin nhắn nào cần đánh dấu đã xem" });
     }
 
     if (last.senderId.toString() === userId) {
       return res
         .status(200)
-        .json({ message: "Cannot mark own message as seen" });
+        .json({ message: "Không thể tự đánh dấu đã xem tin nhắn của mình" });
     }
 
     const updated = await Conversation.findByIdAndUpdate(
@@ -255,13 +255,13 @@ export const markAsSeen = async (req, res) => {
     });
 
     return res.status(200).json({
-      message: "Marked as seen",
+      message: "Đã đánh dấu đã xem",
       seenBy: updated?.seenBy || [],
       myUnreadCount: updated?.unreadCounts?.get?.(userId) || 0,
     });
   } catch (error) {
-    console.error("Error marking as seen:", error);
-    return res.status(500).json({ message: "Internal server error" });  
+    console.error("Lỗi khi đánh dấu đã xem:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });  
   }
 };
 
@@ -286,7 +286,7 @@ export const renameGroup = async (req, res) => {
   try {
     const name = sanitizeText(req.body?.name);
     if (!name || name.length > GROUP_NAME_MAX_LENGTH) {
-      return res.status(400).json({ message: `Group name must be between 1 and ${GROUP_NAME_MAX_LENGTH} characters.` });
+      return res.status(400).json({ message: `Tên nhóm phải dài từ 1 đến ${GROUP_NAME_MAX_LENGTH} ký tự.` });
     }
 
     req.conversation.group.name = name;
@@ -294,8 +294,8 @@ export const renameGroup = async (req, res) => {
     const conversation = await formatAndBroadcastGroup(req.conversation);
     return res.status(200).json({ conversation });
   } catch (error) {
-    console.error("Error renaming group:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi đổi tên nhóm:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -303,17 +303,17 @@ export const addGroupMembers = async (req, res) => {
   try {
     const memberIds = req.body?.memberIds;
     if (!Array.isArray(memberIds) || memberIds.length === 0) {
-      return res.status(400).json({ message: "At least one member ID is required." });
+      return res.status(400).json({ message: "Cần chọn ít nhất một thành viên." });
     }
 
     const uniqueIds = [...new Set(memberIds.map(String))];
     if (uniqueIds.length !== memberIds.length || uniqueIds.some((id) => !mongoose.isValidObjectId(id))) {
-      return res.status(400).json({ message: "Member IDs must be valid and unique." });
+      return res.status(400).json({ message: "Danh sách thành viên không hợp lệ hoặc bị trùng." });
     }
 
     const existingIds = new Set(req.conversation.participants.map((participant) => participant.userId.toString()));
     if (uniqueIds.some((id) => existingIds.has(id))) {
-      return res.status(409).json({ message: "One or more users are already group members." });
+      return res.status(409).json({ message: "Có người đã là thành viên của nhóm." });
     }
 
     const adminId = req.user._id.toString();
@@ -323,10 +323,10 @@ export const addGroupMembers = async (req, res) => {
       Friend.countDocuments({ $or: friendPairs.map(([userA, userB]) => ({ userA, userB })) }),
     ]);
     if (users !== uniqueIds.length) {
-      return res.status(404).json({ message: "One or more users do not exist." });
+      return res.status(404).json({ message: "Có người dùng không tồn tại." });
     }
     if (friendships !== uniqueIds.length) {
-      return res.status(403).json({ message: "You can only add your friends to a group." });
+      return res.status(403).json({ message: "Bạn chỉ có thể thêm bạn bè vào nhóm." });
     }
 
     req.conversation.participants.push(...uniqueIds.map((userId) => ({ userId })));
@@ -334,8 +334,8 @@ export const addGroupMembers = async (req, res) => {
     const conversation = await formatAndBroadcastGroup(req.conversation, uniqueIds);
     return res.status(200).json({ conversation });
   } catch (error) {
-    console.error("Error adding group members:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi thêm thành viên vào nhóm:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -343,14 +343,14 @@ export const removeGroupMember = async (req, res) => {
   try {
     const memberId = req.params.memberId;
     if (!mongoose.isValidObjectId(memberId)) {
-      return res.status(400).json({ message: "A valid member ID is required." });
+      return res.status(400).json({ message: "Mã thành viên không hợp lệ." });
     }
     if (memberId === req.user._id.toString()) {
-      return res.status(400).json({ message: "Use the leave-group action to remove yourself." });
+      return res.status(400).json({ message: "Hãy dùng chức năng rời nhóm để tự rời khỏi nhóm." });
     }
 
     const wasMember = req.conversation.participants.some((participant) => participant.userId.toString() === memberId);
-    if (!wasMember) return res.status(404).json({ message: "Group member not found." });
+    if (!wasMember) return res.status(404).json({ message: "Không tìm thấy thành viên trong nhóm." });
 
     req.conversation.participants = req.conversation.participants.filter((participant) => participant.userId.toString() !== memberId);
     req.conversation.group.admins = (req.conversation.group.admins ?? []).filter((id) => id.toString() !== memberId);
@@ -360,8 +360,8 @@ export const removeGroupMember = async (req, res) => {
     const conversation = await formatAndBroadcastGroup(req.conversation);
     return res.status(200).json({ conversation });
   } catch (error) {
-    console.error("Error removing group member:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi xóa thành viên khỏi nhóm:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -370,10 +370,10 @@ export const updateGroupAdmin = async (req, res) => {
     const memberId = req.params.memberId;
     const isAdmin = req.body?.isAdmin;
     if (!mongoose.isValidObjectId(memberId) || typeof isAdmin !== "boolean") {
-      return res.status(400).json({ message: "A valid member ID and isAdmin value are required." });
+      return res.status(400).json({ message: "Mã thành viên hoặc quyền quản trị không hợp lệ." });
     }
     if (!req.conversation.participants.some((participant) => participant.userId.toString() === memberId)) {
-      return res.status(404).json({ message: "Group member not found." });
+      return res.status(404).json({ message: "Không tìm thấy thành viên trong nhóm." });
     }
 
     const admins = new Set((req.conversation.group.admins ?? []).map(String));
@@ -383,7 +383,7 @@ export const updateGroupAdmin = async (req, res) => {
     if (isAdmin) admins.add(memberId);
     else admins.delete(memberId);
     if (admins.size === 0) {
-      return res.status(400).json({ message: "A group must have at least one administrator." });
+      return res.status(400).json({ message: "Nhóm phải có ít nhất một quản trị viên." });
     }
 
     req.conversation.group.admins = [...admins];
@@ -391,8 +391,8 @@ export const updateGroupAdmin = async (req, res) => {
     const conversation = await formatAndBroadcastGroup(req.conversation);
     return res.status(200).json({ conversation });
   } catch (error) {
-    console.error("Error updating group administrator:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi cập nhật quản trị viên nhóm:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };
 
@@ -423,7 +423,7 @@ export const leaveGroup = async (req, res) => {
     await formatAndBroadcastGroup(req.conversation);
     return res.status(204).send();
   } catch (error) {
-    console.error("Error leaving group:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Lỗi khi rời nhóm:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
   }
 };

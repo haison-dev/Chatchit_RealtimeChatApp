@@ -32,20 +32,20 @@ export const sendDirectMessage = async (req, res) => {
         const normalizedContent = sanitizeText(content, { multiline: true });
         const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
         if (!normalizedContent && !normalizedImage) {
-            return res.status(400).json({ message: "A message requires text or an image." });
+            return res.status(400).json({ message: "Tin nhắn phải có nội dung hoặc ảnh." });
         }
         if (normalizedContent.length > MESSAGE_MAX_LENGTH) {
-            return res.status(400).json({ message: `Message must not exceed ${MESSAGE_MAX_LENGTH} characters.` });
+            return res.status(400).json({ message: `Tin nhắn không được quá ${MESSAGE_MAX_LENGTH} ký tự.` });
         }
         if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
-            return res.status(400).json({ message: "Image URL is not valid." });
+            return res.status(400).json({ message: "Đường dẫn ảnh không hợp lệ." });
         }
         if (!(await isOwnedImage(senderId, normalizedImage))) {
-            return res.status(403).json({ message: "You can only send images that you uploaded." });
+            return res.status(403).json({ message: "Bạn chỉ được gửi ảnh do chính mình tải lên." });
         }
 
         if (!isValidClientMessageId(clientMessageId)) {
-            return res.status(400).json({ message: "A valid client message ID is required." });
+            return res.status(400).json({ message: "Mã tin nhắn phía client không hợp lệ." });
         }
 
         const existingMessage = await findExistingMessage(senderId, clientMessageId.trim());
@@ -55,7 +55,7 @@ export const sendDirectMessage = async (req, res) => {
 
         if (conversationId) {
             if (!mongoose.isValidObjectId(conversationId)) {
-                return res.status(400).json({ message: "A valid conversation ID is required." });
+                return res.status(400).json({ message: "Mã cuộc trò chuyện không hợp lệ." });
             }
             conversation = await Conversation.findOne({
                 _id: conversationId,
@@ -64,7 +64,7 @@ export const sendDirectMessage = async (req, res) => {
             });
 
             if (!conversation) {
-                return res.status(404).json({ message: "Direct conversation not found." });
+                return res.status(404).json({ message: "Không tìm thấy cuộc trò chuyện riêng." });
             }
         }
 
@@ -103,8 +103,8 @@ export const sendDirectMessage = async (req, res) => {
                 return res.status(200).json({ message: duplicate, duplicate: true });
             }
         }
-        console.error("Error sending direct message:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi gửi tin nhắn riêng:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
 
     }
 };
@@ -118,20 +118,20 @@ export const sendGroupMessage = async (req, res) => {
         const normalizedContent = sanitizeText(content, { multiline: true });
         const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
         if (!normalizedContent && !normalizedImage) {
-            return res.status(400).json({ message: "A message requires text or an image." });
+            return res.status(400).json({ message: "Tin nhắn phải có nội dung hoặc ảnh." });
         }
         if (normalizedContent.length > MESSAGE_MAX_LENGTH) {
-            return res.status(400).json({ message: `Message must not exceed ${MESSAGE_MAX_LENGTH} characters.` });
+            return res.status(400).json({ message: `Tin nhắn không được quá ${MESSAGE_MAX_LENGTH} ký tự.` });
         }
         if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
-            return res.status(400).json({ message: "Image URL is not valid." });
+            return res.status(400).json({ message: "Đường dẫn ảnh không hợp lệ." });
         }
         if (!(await isOwnedImage(senderId, normalizedImage))) {
-            return res.status(403).json({ message: "You can only send images that you uploaded." });
+            return res.status(403).json({ message: "Bạn chỉ được gửi ảnh do chính mình tải lên." });
         }
 
         if (!isValidClientMessageId(clientMessageId)) {
-            return res.status(400).json({ message: "A valid client message ID is required." });
+            return res.status(400).json({ message: "Mã tin nhắn phía client không hợp lệ." });
         }
 
         const existingMessage = await findExistingMessage(senderId, clientMessageId.trim());
@@ -160,8 +160,8 @@ export const sendGroupMessage = async (req, res) => {
                 return res.status(200).json({ message: duplicate, duplicate: true });
             }
         }
-        console.error("Error sending group message:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Lỗi khi gửi tin nhắn nhóm:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
 
     }
 }

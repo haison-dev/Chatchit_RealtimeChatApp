@@ -9,7 +9,7 @@ const authLimiter = rateLimit({
     limit: 10,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    message: { message: 'Too many authentication attempts. Please try again later.' },
+    message: { message: 'Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.' },
 });
 
 const signUpLimiter = rateLimit({
@@ -17,7 +17,7 @@ const signUpLimiter = rateLimit({
     limit: 5,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    message: { message: 'Too many accounts created from this address. Please try again later.' },
+    message: { message: 'Đã tạo quá nhiều tài khoản từ địa chỉ này. Vui lòng thử lại sau.' },
 });
 
 const refreshLimiter = rateLimit({
@@ -25,7 +25,7 @@ const refreshLimiter = rateLimit({
     limit: 30,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    message: { message: 'Too many token refresh attempts. Please try again later.' },
+    message: { message: 'Làm mới phiên đăng nhập quá nhiều lần. Vui lòng thử lại sau.' },
 });
 
 router.post('/signup', signUpLimiter, signUp);

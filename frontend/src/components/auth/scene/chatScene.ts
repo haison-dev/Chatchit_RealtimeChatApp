@@ -50,7 +50,7 @@ const createCanvas = (width: number, height: number) => {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D is not available");
+  if (!ctx) throw new Error("Trình duyệt không hỗ trợ Canvas 2D");
   return { canvas, ctx };
 };
 
