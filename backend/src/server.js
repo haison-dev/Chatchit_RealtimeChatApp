@@ -9,6 +9,7 @@ import friendRoute from './routes/friendRoute.js';
 import messageRoute from './routes/messageRoute.js';
 import conversationRoute from './routes/conversationRoute.js';
 import uploadRoute from './routes/uploadRoute.js';
+import adminRoute from './routes/adminRoute.js';
 import cookieParser from 'cookie-parser';
 import { protectedRoute } from './middlewares/authMiddleware.js';
 import { handleBodyParserErrors, rejectUnsafePayload } from './middlewares/securityMiddleware.js';
@@ -46,6 +47,7 @@ app.use('/api/friends', friendRoute);
 app.use('/api/messages', messageRoute);
 app.use('/api/conversations', conversationRoute);
 app.use('/api/uploads', uploadRoute);
+app.use('/api/admin', adminRoute);
 
 app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' });

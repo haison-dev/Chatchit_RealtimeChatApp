@@ -71,6 +71,12 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       set({ isConnected: false, typingUsers: {} });
     });
 
+    // Admin (hoặc chính người dùng ở thiết bị khác) đã kết thúc phiên này.
+    socket.on("session-revoked", () => {
+      toast.error("Thiết bị này đã bị đăng xuất. Vui lòng đăng nhập lại.");
+      useAuthStore.getState().clearState();
+    });
+
     // online users
     socket.on("online-users", (userIds) => {
       set({ onlineUsers: userIds });

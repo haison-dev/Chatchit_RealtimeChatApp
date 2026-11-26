@@ -21,6 +21,7 @@ export const SEARCH_QUERY_MIN_LENGTH = 2;
 export const DISPLAY_NAME_MAX_LENGTH = PERSON_NAME_MAX_LENGTH * 2 + 1;
 export const BIO_MAX_LENGTH = 500;
 export const AVATAR_URL_MAX_LENGTH = 500;
+export const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
 export const PHONE_PATTERN = /^\+?[0-9 ()-]{6,20}$/;
 
 /** Returns a normalized https URL string, or null when the value is not an acceptable avatar URL. */

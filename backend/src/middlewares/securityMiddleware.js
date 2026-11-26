@@ -69,6 +69,18 @@ export const profileLimiter = createUserLimiter({
   message: "Too many profile requests. Please wait a moment.",
 });
 
+export const adminLimiter = createUserLimiter({
+  windowMs: 60 * 1000,
+  limit: 120,
+  message: "Bạn thao tác quá nhanh. Vui lòng đợi một lát.",
+});
+
+export const adminActionLimiter = createUserLimiter({
+  windowMs: 10 * 60 * 1000,
+  limit: 60,
+  message: "Bạn đăng xuất thiết bị quá nhiều lần. Vui lòng thử lại sau.",
+});
+
 export const profileUpdateLimiter = createUserLimiter({
   windowMs: 10 * 60 * 1000,
   limit: 20,

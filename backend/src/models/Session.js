@@ -15,6 +15,10 @@ const sessionSchema = new mongoose.Schema(
     // parallel refresh calls (several tabs, page reload) do not log the user out.
     previousRefreshToken: { type: String, index: true, sparse: true },
     rotatedAt: { type: Date },
+    // Thiết bị đăng nhập, hiển thị cho admin. Cập nhật mỗi lần refresh.
+    userAgent: { type: String, maxlength: 300 },
+    ip: { type: String, maxlength: 64 },
+    lastUsedAt: { type: Date },
   },
   {
     timestamps: true,

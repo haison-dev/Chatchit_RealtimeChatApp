@@ -26,6 +26,32 @@ const registerCallHandlers = createCallHandlers(io);
 
 const onlineUsers = new Map(); // { userId: Set<socketId> }
 
+/** Id của những người dùng đang có ít nhất một socket mở. */
+export const getOnlineUserIds = () => Array.from(onlineUsers.keys());
+
+/** Thiết bị (phiên đăng nhập) có đang mở socket hay không. */
+export const isSessionOnline = (sessionId) => {
+  for (const socket of io.of("/").sockets.values()) {
+    if (socket.sessionId === sessionId) return true;
+  }
+  return false;
+};
+
+/**
+ * Báo cho thiết bị của các phiên đã xóa rằng chúng bị đăng xuất, rồi ngắt socket.
+ * Có `userId` thì ngắt luôn socket của người đó dùng token cũ (tạo trước khi có theo dõi phiên).
+ */
+export const disconnectSessions = (sessionIds, { userId } = {}) => {
+  const ended = new Set(sessionIds.map(String));
+  for (const socket of io.of("/").sockets.values()) {
+    const legacy = userId && !socket.sessionId && socket.user?._id?.toString() === userId;
+    if (ended.has(socket.sessionId) || legacy) {
+      socket.emit("session-revoked");
+      socket.disconnect(true);
+    }
+  }
+};
+
 const broadcastOnlineUsers = () => {
   io.emit("online-users", Array.from(onlineUsers.keys()));
 };

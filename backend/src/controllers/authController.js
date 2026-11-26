@@ -3,14 +3,13 @@ import User from "../models/User.js";
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
-import { PERSON_NAME_MAX_LENGTH, sanitizeText } from '../utils/sanitize.js';
+import { PERSON_NAME_MAX_LENGTH, USERNAME_PATTERN, sanitizeText } from '../utils/sanitize.js';
 
 const ACCESS_TOKEN_TTL = '30m';
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; // 14 days
 // How long a just-rotated refresh token is still accepted (see refreshToken).
 export const REFRESH_REUSE_GRACE_MS = 15 * 1000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
 
 const refreshCookieOptions = () => ({
     httpOnly: true,
@@ -30,8 +29,19 @@ const findRecentlyRotatedSession = (tokenHash) =>
         rotatedAt: { $gte: new Date(Date.now() - REFRESH_REUSE_GRACE_MS) },
     });
 
-const createAccessToken = (userId) =>
-    jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
+// "sid" gắn access token với phiên đăng nhập, nên khi phiên bị xóa (admin đăng xuất thiết bị)
+// thì access token cũng mất hiệu lực ngay, không phải chờ hết hạn.
+const createAccessToken = (userId, sessionId) =>
+    jwt.sign({ userId, sid: sessionId.toString() }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
+
+const deviceOf = (req) => {
+    const userAgent = req.get?.('user-agent');
+    return {
+        userAgent: typeof userAgent === 'string' ? userAgent.slice(0, 300) : undefined,
+        ip: typeof req.ip === 'string' ? req.ip.slice(0, 64) : undefined,
+        lastUsedAt: new Date(),
+    };
+};
 
 export const signUp = async (req, res) => {
     try {
@@ -130,18 +140,19 @@ export const signIn = async (req, res) => {
             return res.status(401).json({ message: "username or password is incorrect" });
         }
 
-        //create a jwt token
-        const accessToken = createAccessToken(user._id);
-
         //refresh token 
         const refreshTokenValue = crypto.randomBytes(64).toString('hex');
 
         //create new session to save refresh token
-        await Session.create({
+        const session = await Session.create({
             userId: user._id,
             refreshToken: hashToken(refreshTokenValue),
             expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+            ...deviceOf(req),
         });
+
+        //create a jwt token
+        const accessToken = createAccessToken(user._id, session._id);
 
         //return refresh token in cookie
         res.cookie('refreshToken', refreshTokenValue, {
@@ -191,7 +202,7 @@ export const refreshToken = async (req, res) => {
             const rotated = await findRecentlyRotatedSession(tokenHash);
             if (rotated) {
                 // The browser already received the new cookie from the winning request.
-                return res.status(200).json({ accessToken: createAccessToken(rotated.userId) });
+                return res.status(200).json({ accessToken: createAccessToken(rotated.userId, rotated._id) });
             }
             return res.status(403).json({ message: "Invalid token or expire" })
         }
@@ -208,7 +219,7 @@ export const refreshToken = async (req, res) => {
         const nextExpiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL);
         const rotatedSession = await Session.findOneAndUpdate(
             { _id: session._id, refreshToken: tokenHash },
-            { $set: { refreshToken: nextTokenHash, expiresAt: nextExpiresAt, previousRefreshToken: tokenHash, rotatedAt: new Date() } },
+            { $set: { refreshToken: nextTokenHash, expiresAt: nextExpiresAt, previousRefreshToken: tokenHash, rotatedAt: new Date(), ...deviceOf(req) } },
             { new: true },
         );
 
@@ -216,7 +227,7 @@ export const refreshToken = async (req, res) => {
             // Lost a race with a parallel refresh that rotated the token first.
             const rotated = await findRecentlyRotatedSession(tokenHash);
             if (rotated) {
-                return res.status(200).json({ accessToken: createAccessToken(rotated.userId) });
+                return res.status(200).json({ accessToken: createAccessToken(rotated.userId, rotated._id) });
             }
             res.clearCookie('refreshToken', refreshCookieOptions());
             return res.status(403).json({ message: "Refresh token has already been used" });
@@ -227,7 +238,7 @@ export const refreshToken = async (req, res) => {
             maxAge: REFRESH_TOKEN_TTL,
         });
 
-        const accessToken = createAccessToken(rotatedSession.userId);
+        const accessToken = createAccessToken(rotatedSession.userId, rotatedSession._id);
 
         //return
         return res.status(200).json({ accessToken });

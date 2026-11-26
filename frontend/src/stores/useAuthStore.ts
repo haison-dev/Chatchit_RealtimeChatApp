@@ -102,6 +102,15 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      syncUser: async () => {
+        try {
+          const user = await authService.fetchMe();
+          if (get().accessToken) set({ user });
+        } catch (error) {
+          console.error("Không thể đồng bộ thông tin người dùng", error);
+        }
+      },
+
       updateProfile: async (input) => {
         const previous = get().user;
         const user = await userService.updateMe(input);

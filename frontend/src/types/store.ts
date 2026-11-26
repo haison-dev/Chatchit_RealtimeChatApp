@@ -20,6 +20,8 @@ export interface AuthState {
   ) => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Tải lại người dùng đang đăng nhập ở chế độ nền (quyền hoặc hồ sơ đổi ở nơi khác); lỗi thì giữ bản cũ. */
+  syncUser: () => Promise<void>;
   fetchMe: () => Promise<void>;
   refresh: () => Promise<void>;
   updateProfile: (input: UpdateProfileInput) => Promise<void>;

@@ -6,6 +6,8 @@ export interface User {
   avatarUrl?: string;
   bio?: string;
   phone?: string;
+  /** "admin" được vào trang quản trị; không có ở người dùng lưu từ trước khi có phân quyền. */
+  role?: "user" | "admin";
   createdAt?: string;
   updatedAt?: string;
 }

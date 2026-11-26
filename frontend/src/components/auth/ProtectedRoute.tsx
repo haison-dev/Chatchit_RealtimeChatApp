@@ -19,6 +19,9 @@ const ProtectedRoute = () => {
         const current = useAuthStore.getState();
         if (current.accessToken && !current.user) {
           await fetchMe();
+        } else if (current.accessToken) {
+          // Người dùng lưu trên máy có thể đã cũ (ví dụ vừa được cấp quyền admin); tải lại ở chế độ nền.
+          void current.syncUser();
         }
       } finally {
         if (active) {

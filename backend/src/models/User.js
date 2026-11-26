@@ -37,7 +37,13 @@ const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         sparse: true,
-    }
+    },
+    // Chỉ đặt bằng scripts/createAdmin.js; không API nào cho người dùng tự đổi.
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user',
+    },
 }, {
     timestamps: true
 });

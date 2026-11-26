@@ -13,6 +13,7 @@ import { useSocketStore } from './stores/useSocketStore';
 const SignInPage = lazy(() => import('./pages/SignInPage'));
 const SignUpPage = lazy(() => import('./pages/SignUpPage'));
 const ChatAppPage = lazy(() => import('./pages/ChatAppPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 function App() {
   const isDark = useThemeStore((state) => state.isDark);
@@ -45,6 +46,7 @@ function App() {
 
             {/* protected routes */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="/*" element={<ChatAppPage />} />
             </Route>
           </Routes>

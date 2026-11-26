@@ -1,4 +1,7 @@
-import { Download, Moon } from "lucide-react";
+import { Link } from "react-router";
+import { ChevronRight, Download, Moon, ShieldCheck } from "lucide-react";
+import { ADMIN_PATH } from "@/lib/routes";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useThemeStore } from "@/stores/useThemeStore";
 import Logout from "../auth/Logout";
@@ -6,11 +9,12 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Switch } from "../ui/switch";
 
-/** What the sidebar offers around your name, shown under your own profile on a phone. */
+/** Các mục sidebar đặt quanh tên tài khoản, hiển thị dưới hồ sơ của mình trên điện thoại. */
 const AccountSettings = () => {
   const isDark = useThemeStore((state) => state.isDark);
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const { status: installStatus, install } = useInstallPrompt();
+  const isAdmin = useAuthStore((state) => state.user?.role === "admin");
 
   return (
     <Card>
@@ -22,6 +26,12 @@ const AccountSettings = () => {
           </span>
           <Switch checked={isDark} onCheckedChange={toggleTheme} />
         </label>
+        {isAdmin && (
+          <Link to={ADMIN_PATH} className="flex min-h-11 items-center gap-3 rounded-md text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <ShieldCheck className="size-4 text-muted-foreground" aria-hidden="true" /> Trang quản trị
+            <ChevronRight className="ml-auto size-4 text-muted-foreground" aria-hidden="true" />
+          </Link>
+        )}
         {installStatus === "available" && (
           <Button type="button" variant="ghost" className="h-11 w-full justify-start gap-3 px-0" onClick={() => void install()}>
             <Download className="size-4 text-muted-foreground" /> Cài đặt ứng dụng

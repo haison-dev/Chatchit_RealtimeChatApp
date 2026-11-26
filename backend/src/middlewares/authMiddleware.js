@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { isSessionActive } from "../utils/sessionHelper.js";
 
 export const protectedRoute = async (req, res, next) => {
   try {
@@ -21,6 +22,11 @@ export const protectedRoute = async (req, res, next) => {
       return res.status(403).json({ message: "Access token expired or invalid" });
     }
 
+    // Phiên đã kết thúc (đăng xuất, hoặc bị admin đăng xuất): token mất hiệu lực ngay.
+    if (!(await isSessionActive(decoded))) {
+      return res.status(403).json({ message: "Phiên đăng nhập đã kết thúc" });
+    }
+
     //find user
     const user = await User.findById(decoded.userId).select("-hashPassword");
 
@@ -30,6 +36,7 @@ export const protectedRoute = async (req, res, next) => {
 
     //return user info in req.user
     req.user = user;
+    req.sessionId = typeof decoded.sid === "string" ? decoded.sid : null;
     return next();
   } catch (error) {
     console.error("Verify JWT error in authMiddleware", error);

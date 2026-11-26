@@ -32,13 +32,15 @@ test("refreshToken rotates the token and remembers the previous one", async () =
   const session = { _id: "s1", userId: USER_ID, expiresAt: new Date(Date.now() + 60_000), deleteOne: async () => {} };
   await withSession({
     findOne: async (filter) => (filter.refreshToken === hash("old") ? session : null),
-    findOneAndUpdate: async (_filter, value) => { update = value; return { userId: USER_ID }; },
+    findOneAndUpdate: async (_filter, value) => { update = value; return { _id: "s1", userId: USER_ID }; },
   }, async () => {
     const res = createRes();
     await refreshToken({ cookies: { refreshToken: "old" } }, res);
 
     assert.equal(res.result.statusCode, 200);
-    assert.equal(jwt.verify(res.result.body.accessToken, process.env.ACCESS_TOKEN_SECRET).userId, USER_ID);
+    const payload = jwt.verify(res.result.body.accessToken, process.env.ACCESS_TOKEN_SECRET);
+    assert.equal(payload.userId, USER_ID);
+    assert.equal(payload.sid, "s1", "token phải chứa id của phiên");
     assert.equal(res.result.cookies.length, 1);
     assert.equal(update.$set.previousRefreshToken, hash("old"));
     assert.ok(update.$set.rotatedAt instanceof Date);
@@ -51,7 +53,7 @@ test("refreshToken accepts a just-rotated token without signing the user out", a
     findOne: async (filter) => {
       if (filter.refreshToken) return null;
       graceFilter = filter;
-      return { userId: USER_ID };
+      return { _id: "s1", userId: USER_ID };
     },
   }, async () => {
     const res = createRes();
@@ -72,7 +74,7 @@ test("refreshToken survives losing the rotation race to a parallel request", asy
   await withSession({
     findOne: async (filter) => {
       lookups += 1;
-      return filter.refreshToken ? session : { userId: USER_ID };
+      return filter.refreshToken ? session : { _id: "s1", userId: USER_ID };
     },
     findOneAndUpdate: async () => null,
   }, async () => {
