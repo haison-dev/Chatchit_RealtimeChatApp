@@ -1,20 +1,19 @@
 import api from "@/lib/axios";
+import { messageOf, unwrap } from "@/lib/api-response";
+import type { Friend, FriendRequest } from "@/interfaces/user.interface";
 
 export const friendService = {
+  /** Trả thông báo của backend để hiện cho người dùng. */
   async sendFriendRequest(to: string, message?: string) {
-    const res = await api.post("/friends/requests", { to, message });
-    return res.data.message;
+    return messageOf(await api.post("/friends/requests", { to, message }), "Đã gửi lời mời kết bạn.");
   },
 
   async getAllFriendRequests() {
-    const res = await api.get("/friends/requests");
-    const { sent, received } = res.data;
-    return { sent, received };
+    return unwrap<{ sent: FriendRequest[]; received: FriendRequest[] }>(await api.get("/friends/requests"));
   },
 
   async acceptRequest(requestId: string) {
-    const res = await api.post(`/friends/requests/${requestId}/accept`);
-    return res.data.newFriend;
+    return unwrap<{ newFriend: Friend }>(await api.post(`/friends/requests/${requestId}/accept`)).newFriend;
   },
 
   async declineRequest(requestId: string) {
@@ -26,7 +25,6 @@ export const friendService = {
   },
 
   async getFriendList() {
-    const res = await api.get("/friends");
-    return res.data.friends;
+    return unwrap<{ friends: Friend[] }>(await api.get("/friends")).friends;
   },
 };

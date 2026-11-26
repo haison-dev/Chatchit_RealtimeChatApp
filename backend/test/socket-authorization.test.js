@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import Conversation from "../src/models/conversation.model.js";
-import { authorizeConversationJoin } from "../src/services/conversation.service.js";
+import { conversationService } from "../src/services/conversation.service.js";
+const { authorizeConversationJoin } = conversationService;
 
 test("socket room authorization rejects malformed IDs", async () => {
   const result = await authorizeConversationJoin("507f1f77bcf86cd799439011", "invalid");

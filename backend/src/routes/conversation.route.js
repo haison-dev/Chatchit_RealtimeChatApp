@@ -3,7 +3,7 @@ import express from 'express';
 import { addGroupMembers, createConversation, deleteConversation, getConversations, getMessages, leaveGroup, markAsSeen, removeGroupMember, renameGroup, updateGroupAdmin } from '../controllers/conversation.controller.js';
 import { checkFriendship } from '../middlewares/friend.middleware.js';
 import { requireConversationMember, requireGroupAdmin, requireGroupMember } from '../middlewares/conversation.middleware.js';
-import { searchMessages } from '../controllers/message-action.controller.js';
+import { searchMessages } from '../controllers/message.controller.js';
 import { searchLimiter } from '../middlewares/security.middleware.js';
 
 const router = express.Router();

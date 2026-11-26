@@ -2,8 +2,7 @@ import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 import { socketAuthMiddleware } from "../middlewares/socket.middleware.js";
-import { getUserConversationsForSokectIO } from "../controllers/conversation.controller.js";
-import { authorizeConversationJoin } from "../services/conversation.service.js";
+import { conversationService } from "../services/conversation.service.js";
 import { createCallHandlers } from "./call.handler.js";
 import { createEventLimiter } from "../utils/event-limiter.util.js";
 
@@ -22,7 +21,14 @@ const io = new Server(server, {
 
 io.use(socketAuthMiddleware);
 
-const registerCallHandlers = createCallHandlers(io);
+// Tạo lúc có socket đầu tiên chứ không phải lúc nạp module: service import io từ file này,
+// nên tạo ngay sẽ gặp vòng import chưa khởi tạo xong (call.handler -> friend.service -> socket).
+/** @type {ReturnType<typeof createCallHandlers> | undefined} */
+let callHandlers;
+const registerCallHandlers = (socket, allowEvent) => {
+  callHandlers ??= createCallHandlers(io);
+  return callHandlers(socket, allowEvent);
+};
 
 const onlineUsers = new Map(); // { userId: Set<socketId> }
 
@@ -70,7 +76,7 @@ io.on("connection", async (socket) => {
 
   broadcastOnlineUsers();
 
-  const conversationIds = await getUserConversationsForSokectIO(user._id);
+  const conversationIds = await conversationService.getUserConversationIds(user._id);
   conversationIds.forEach((id) => {
     socket.join(id);
   });
@@ -81,7 +87,7 @@ io.on("connection", async (socket) => {
       return acknowledge?.({ ok: false, message: "Không thể vào cuộc trò chuyện." });
     }
     try {
-      const authorization = await authorizeConversationJoin(user._id, conversationId);
+      const authorization = await conversationService.authorizeConversationJoin(user._id, conversationId);
       if (!authorization.ok) {
         return acknowledge?.(authorization);
       }

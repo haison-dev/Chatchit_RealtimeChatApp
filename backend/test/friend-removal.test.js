@@ -50,7 +50,8 @@ test("removeFriend deletes the sorted pair and notifies both people", async () =
     const res = createRes();
     await removeFriend({ user: { _id: FRIEND }, params: { friendId: ME } }, res);
 
-    assert.equal(res.result.statusCode, 204);
+    assert.equal(res.result.statusCode, 200);
+    assert.equal(res.result.body.success, true);
     assert.deepEqual(filter, { userA: ME, userB: FRIEND }, "the pair is stored sorted");
     assert.deepEqual(emitted, [
       { room: FRIEND, event: "friend-removed", payload: { userId: ME } },

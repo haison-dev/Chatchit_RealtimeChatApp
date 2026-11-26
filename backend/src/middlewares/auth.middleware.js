@@ -1,45 +1,37 @@
+// @ts-check
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
-import { isSessionActive } from "../services/session.service.js";
+import { sessionService } from "../services/session.service.js";
+import { AppError } from "../utils/app-error.util.js";
+import { asyncHandler } from "../utils/response.util.js";
 
-export const protectedRoute = async (req, res, next) => {
+/** @typedef {import("../interfaces/session.interface.js").AccessTokenPayload} AccessTokenPayload */
+
+/**
+ * Xác thực access token trong header "Authorization: Bearer <token>", gắn req.user và req.sessionId.
+ * Trả 403 khi token hết hạn, sai, hoặc phiên đã bị xóa: frontend dựa vào 403 để tự làm mới phiên,
+ * nên không đổi sang 401.
+ */
+export const protectedRoute = asyncHandler(async (req, _res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = typeof authHeader === "string" && authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+  if (!token) throw AppError.unauthorized("Thiếu mã truy cập");
+
+  /** @type {AccessTokenPayload} */
+  let decoded;
   try {
-    //get accessToken from headers: "Bearer <token>"
-    const authHeader = req.headers["authorization"];
-    const token = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7).trim()
-      : null;
-
-    if (!token) {
-      return res.status(401).json({ message: "Thiếu mã truy cập" });
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, { algorithms: ["HS256"] });
-    } catch {
-      // 403 tells the client to refresh its access token.
-      return res.status(403).json({ message: "Mã truy cập đã hết hạn hoặc không hợp lệ" });
-    }
-
-    // Phiên đã kết thúc (đăng xuất, hoặc bị admin đăng xuất): token mất hiệu lực ngay.
-    if (!(await isSessionActive(decoded))) {
-      return res.status(403).json({ message: "Phiên đăng nhập đã kết thúc" });
-    }
-
-    //find user
-    const user = await User.findById(decoded.userId).select("-hashPassword");
-
-    if (!user) {
-      return res.status(404).json({ message: "Không tìm thấy người dùng" });
-    }
-
-    //return user info in req.user
-    req.user = user;
-    req.sessionId = typeof decoded.sid === "string" ? decoded.sid : null;
-    return next();
-  } catch (error) {
-    console.error("Lỗi khi xác thực access token:", error);
-    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
+    decoded = /** @type {AccessTokenPayload} */ (jwt.verify(token, /** @type {string} */ (process.env.ACCESS_TOKEN_SECRET), { algorithms: ["HS256"] }));
+  } catch {
+    throw AppError.tokenInvalid("Mã truy cập đã hết hạn hoặc không hợp lệ");
   }
-};
+
+  // Phiên đã kết thúc (đăng xuất, hoặc bị admin đăng xuất): token mất hiệu lực ngay.
+  if (!(await sessionService.isSessionActive(decoded))) throw AppError.tokenInvalid("Phiên đăng nhập đã kết thúc");
+
+  const user = await User.findById(decoded.userId).select("-hashPassword");
+  if (!user) throw AppError.notFound("Không tìm thấy người dùng");
+
+  req.user = user;
+  req.sessionId = typeof decoded.sid === "string" ? decoded.sid : null;
+  next();
+});

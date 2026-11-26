@@ -1,33 +1,23 @@
-import api, { refreshAccessToken } from '@/lib/axios';
+import api, { refreshAccessToken } from "@/lib/axios";
+import { unwrap } from "@/lib/api-response";
+import type { User } from "@/interfaces/user.interface";
 
 export const authService = {
-    signUp: async (username: string, password: string, email: string, firstName: string, lastName: string) => {
-        const res = await api.post('/auth/signup', {
-            username,
-            password,
-            email,
-            firstName,
-            lastName
-        }, { withCredentials: true });
-        return res.data;
-    },
+  async signUp(username: string, password: string, email: string, firstName: string, lastName: string) {
+    await api.post("/auth/signup", { username, password, email, firstName, lastName }, { withCredentials: true });
+  },
 
-    signIn: async (username: string, password: string) => {
-        const res = await api.post('/auth/signin', {
-            username,
-            password
-        }, { withCredentials: true });
-        return res.data;
-    },
+  async signIn(username: string, password: string) {
+    return unwrap<{ accessToken: string }>(await api.post("/auth/signin", { username, password }, { withCredentials: true }));
+  },
 
-    signOut: async () => {
-        return api.post('/auth/signout', {}, { withCredentials: true });
-    },
-    
-    fetchMe: async () => {
-        const res = await api.get('/users/me', { withCredentials: true });
-        return res.data.user;
-    },
+  async signOut() {
+    await api.post("/auth/signout", {}, { withCredentials: true });
+  },
 
-    refresh: () => refreshAccessToken(),
+  async fetchMe() {
+    return unwrap<{ user: User }>(await api.get("/users/me", { withCredentials: true })).user;
+  },
+
+  refresh: () => refreshAccessToken(),
 };

@@ -1,167 +1,40 @@
-import Conversation from "../models/conversation.model.js";
-import Message from "../models/message.model.js";
-import { emitNewMessage, updateConversationAfterCreateMessage } from "../services/message.service.js";
-import {io} from "../socket/index.js";
-import mongoose from "mongoose";
-import { MESSAGE_MAX_LENGTH, sanitizeText } from "../utils/sanitize.util.js";
+// @ts-check
+import { messageService } from "../services/message.service.js";
+import { asyncHandler, sendSuccess } from "../utils/response.util.js";
 
-const isValidClientMessageId = (value) =>
-    typeof value === "string" && value.trim().length >= 8 && value.trim().length <= 100;
+/** Tin gửi lại (trùng clientMessageId) trả 200 với tin cũ; tin mới trả 201. @param {{ message: unknown, duplicate: boolean }} result */
+const toResponse = ({ message, duplicate }) => ({ status: duplicate ? 200 : 201, data: { message, duplicate } });
 
-const findExistingMessage = (senderId, clientMessageId) =>
-    Message.findOne({ senderId, clientMessageId });
+// POST /messages/direct (sau checkFriendship)
+export const sendDirectMessage = asyncHandler(async (req, res) => {
+    sendSuccess(res, toResponse(await messageService.sendDirectMessage(req.user._id, req.body ?? {})));
+});
 
-const isOwnedImage = async (senderId, imgUrl) => {
-    if (!imgUrl) return true;
-    const imageId = imgUrl.split("/").pop();
-    const file = await mongoose.connection.db.collection("messageImages.files").findOne({
-        _id: new mongoose.Types.ObjectId(imageId),
-        "metadata.uploadedBy": senderId.toString(),
-    });
-    return !!file;
-};
+// POST /messages/group (sau requireConversationMember, requireGroupMember)
+export const sendGroupMessage = asyncHandler(async (req, res) => {
+    sendSuccess(res, toResponse(await messageService.sendGroupMessage(req.user._id, req.conversation, req.body ?? {})));
+});
 
-export const sendDirectMessage = async (req, res) => {
-    try {
-        const { recipientId, content, conversationId, clientMessageId, imgUrl } = req.body;
+// PATCH /messages/:messageId
+export const updateMessage = asyncHandler(async (req, res) => {
+    const message = await messageService.updateMessage(req.user._id, req.params.messageId, req.body?.content);
+    sendSuccess(res, { message: "Đã sửa tin nhắn.", data: { message } });
+});
 
-        const senderId = req.user._id;
+// DELETE /messages/:messageId (xóa mềm)
+export const deleteMessage = asyncHandler(async (req, res) => {
+    const message = await messageService.deleteMessage(req.user._id, req.params.messageId);
+    sendSuccess(res, { message: "Đã xóa tin nhắn.", data: { message } });
+});
 
-        let conversation;
+// PUT /messages/:messageId/reaction
+export const toggleReaction = asyncHandler(async (req, res) => {
+    const message = await messageService.toggleReaction(req.user._id, req.params.messageId, req.body?.emoji);
+    sendSuccess(res, { data: { message } });
+});
 
-        const normalizedContent = sanitizeText(content, { multiline: true });
-        const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
-        if (!normalizedContent && !normalizedImage) {
-            return res.status(400).json({ message: "Tin nhắn phải có nội dung hoặc ảnh." });
-        }
-        if (normalizedContent.length > MESSAGE_MAX_LENGTH) {
-            return res.status(400).json({ message: `Tin nhắn không được quá ${MESSAGE_MAX_LENGTH} ký tự.` });
-        }
-        if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
-            return res.status(400).json({ message: "Đường dẫn ảnh không hợp lệ." });
-        }
-        if (!(await isOwnedImage(senderId, normalizedImage))) {
-            return res.status(403).json({ message: "Bạn chỉ được gửi ảnh do chính mình tải lên." });
-        }
-
-        if (!isValidClientMessageId(clientMessageId)) {
-            return res.status(400).json({ message: "Mã tin nhắn phía client không hợp lệ." });
-        }
-
-        const existingMessage = await findExistingMessage(senderId, clientMessageId.trim());
-        if (existingMessage) {
-            return res.status(200).json({ message: existingMessage, duplicate: true });
-        }
-
-        if (conversationId) {
-            if (!mongoose.isValidObjectId(conversationId)) {
-                return res.status(400).json({ message: "Mã cuộc trò chuyện không hợp lệ." });
-            }
-            conversation = await Conversation.findOne({
-                _id: conversationId,
-                type: "direct",
-                "participants.userId": { $all: [senderId, recipientId] },
-            });
-
-            if (!conversation) {
-                return res.status(404).json({ message: "Không tìm thấy cuộc trò chuyện riêng." });
-            }
-        }
-
-        if (!conversation) {
-            conversation = await Conversation.create({
-                type: "direct",
-                participants: [{
-                    userId: senderId, joinAt: new Date()
-                }, {
-                    userId: recipientId, joinAt: new Date()
-                }],
-                lastMessageAt: new Date(),
-                unreadCounts: new Map()
-            })
-        }   
-
-        const message = await Message.create({
-            conversationId: conversation._id,
-            senderId,
-            clientMessageId: clientMessageId.trim(),
-            content: normalizedContent || null,
-            imgUrl: normalizedImage || undefined,
-        }); 
-
-        updateConversationAfterCreateMessage(conversation, message, senderId);
-        await conversation.save();
-
-        await emitNewMessage(io, conversation, message);
-
-        return res.status(201).json({ message });
-
-    } catch (error) {
-        if (error?.code === 11000 && req.body?.clientMessageId) {
-            const duplicate = await findExistingMessage(req.user._id, req.body.clientMessageId.trim());
-            if (duplicate) {
-                return res.status(200).json({ message: duplicate, duplicate: true });
-            }
-        }
-        console.error("Lỗi khi gửi tin nhắn riêng:", error);
-        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
-
-    }
-};
-
-export const sendGroupMessage = async (req, res) => {
-    try {
-        const { conversationId, content, clientMessageId, imgUrl } = req.body;
-        const senderId = req.user._id;
-        const conversation = req.conversation;
-
-        const normalizedContent = sanitizeText(content, { multiline: true });
-        const normalizedImage = typeof imgUrl === "string" ? imgUrl.trim() : "";
-        if (!normalizedContent && !normalizedImage) {
-            return res.status(400).json({ message: "Tin nhắn phải có nội dung hoặc ảnh." });
-        }
-        if (normalizedContent.length > MESSAGE_MAX_LENGTH) {
-            return res.status(400).json({ message: `Tin nhắn không được quá ${MESSAGE_MAX_LENGTH} ký tự.` });
-        }
-        if (normalizedImage && !/^\/uploads\/images\/[a-f\d]{24}$/i.test(normalizedImage)) {
-            return res.status(400).json({ message: "Đường dẫn ảnh không hợp lệ." });
-        }
-        if (!(await isOwnedImage(senderId, normalizedImage))) {
-            return res.status(403).json({ message: "Bạn chỉ được gửi ảnh do chính mình tải lên." });
-        }
-
-        if (!isValidClientMessageId(clientMessageId)) {
-            return res.status(400).json({ message: "Mã tin nhắn phía client không hợp lệ." });
-        }
-
-        const existingMessage = await findExistingMessage(senderId, clientMessageId.trim());
-        if (existingMessage) {
-            return res.status(200).json({ message: existingMessage, duplicate: true });
-        }
-
-        const message = await Message.create({
-            conversationId,
-            senderId,
-            clientMessageId: clientMessageId.trim(),
-            content: normalizedContent || null,
-            imgUrl: normalizedImage || undefined,
-        });
-
-        updateConversationAfterCreateMessage(conversation, message, senderId);
-        await conversation.save();
-
-        await emitNewMessage(io, conversation, message);
-
-        return res.status(201).json({ message });
-    } catch (error) {
-        if (error?.code === 11000 && req.body?.clientMessageId) {
-            const duplicate = await findExistingMessage(req.user._id, req.body.clientMessageId.trim());
-            if (duplicate) {
-                return res.status(200).json({ message: duplicate, duplicate: true });
-            }
-        }
-        console.error("Lỗi khi gửi tin nhắn nhóm:", error);
-        return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
-
-    }
-}
+// GET /conversations/:conversationId/messages/search?q= (sau requireConversationMember)
+export const searchMessages = asyncHandler(async (req, res) => {
+    const messages = await messageService.searchMessages(req.user._id, req.conversation, req.query?.q);
+    sendSuccess(res, { data: { messages } });
+});

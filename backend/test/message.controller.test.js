@@ -56,8 +56,8 @@ test("sendGroupMessage returns an existing message for an idempotent retry", asy
     await sendGroupMessage(req, res);
 
     assert.equal(res.result.statusCode, 200);
-    assert.equal(res.result.body.duplicate, true);
-    assert.equal(res.result.body.message, existing);
+    assert.equal(res.result.body.data.duplicate, true);
+    assert.equal(res.result.body.data.message, existing);
   } finally {
     Message.findOne = originalFindOne;
   }

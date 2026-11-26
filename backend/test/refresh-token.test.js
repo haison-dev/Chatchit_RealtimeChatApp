@@ -38,7 +38,7 @@ test("refreshToken rotates the token and remembers the previous one", async () =
     await refreshToken({ cookies: { refreshToken: "old" } }, res);
 
     assert.equal(res.result.statusCode, 200);
-    const payload = jwt.verify(res.result.body.accessToken, process.env.ACCESS_TOKEN_SECRET);
+    const payload = jwt.verify(res.result.body.data.accessToken, process.env.ACCESS_TOKEN_SECRET);
     assert.equal(payload.userId, USER_ID);
     assert.equal(payload.sid, "s1", "token phải chứa id của phiên");
     assert.equal(res.result.cookies.length, 1);
@@ -60,7 +60,7 @@ test("refreshToken accepts a just-rotated token without signing the user out", a
     await refreshToken({ cookies: { refreshToken: "old" } }, res);
 
     assert.equal(res.result.statusCode, 200);
-    assert.ok(res.result.body.accessToken);
+    assert.ok(res.result.body.data.accessToken);
     assert.equal(res.result.cleared, 0, "the cookie must stay");
     assert.equal(res.result.cookies.length, 0, "no second rotation");
     assert.equal(graceFilter.previousRefreshToken, hash("old"));

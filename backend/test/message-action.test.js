@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { deleteMessage, searchMessages, toggleReaction, updateMessage } from "../src/controllers/message-action.controller.js";
+import { deleteMessage, searchMessages, toggleReaction, updateMessage } from "../src/controllers/message.controller.js";
 import Conversation from "../src/models/conversation.model.js";
 import Message from "../src/models/message.model.js";
 import { uploadImage } from "../src/controllers/upload.controller.js";
@@ -28,7 +28,12 @@ test("message updates reject malformed message IDs before querying MongoDB", asy
 
 test("message search requires a meaningful query", async () => {
   const res = response();
-  await searchMessages({ params: { conversationId: "conversation-1" }, query: { q: "a" } }, res);
+  await searchMessages({
+    params: { conversationId: "conversation-1" },
+    query: { q: "a" },
+    user: { _id: "507f1f77bcf86cd799439011" },
+    conversation: { _id: "conversation-1", participants: [] },
+  }, res);
 
   assert.equal(res.result.statusCode, 400);
   assert.match(res.result.body.message, /từ 2 đến 100/i);

@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/stores/auth.store";
 import axios from "axios";
+import type { ApiSuccess } from "@/interfaces/api.interface";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -15,8 +16,8 @@ let refreshPromise: Promise<string> | null = null;
  */
 export const refreshAccessToken = (): Promise<string> => {
   refreshPromise ??= api
-    .post("/auth/refresh")
-    .then((res) => res.data.accessToken as string)
+    .post<ApiSuccess<{ accessToken: string }>>("/auth/refresh")
+    .then((res) => res.data.data.accessToken)
     .finally(() => {
       refreshPromise = null;
     });

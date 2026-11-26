@@ -14,19 +14,19 @@ describe("userService", () => {
   });
 
   it("sends the search text as an encoded query parameter", async () => {
-    vi.mocked(api.get).mockResolvedValue({ data: { users: [] } });
+    vi.mocked(api.get).mockResolvedValue({ data: { success: true, message: null, data: { users: [] } } });
     await userService.searchUsers("a&b=c");
     expect(api.get).toHaveBeenCalledWith("/users", { params: { q: "a&b=c" }, signal: undefined });
   });
 
   it("loads a profile by id and returns the profile object", async () => {
-    vi.mocked(api.get).mockResolvedValue({ data: { profile: { _id: "u1" } } });
+    vi.mocked(api.get).mockResolvedValue({ data: { success: true, message: null, data: { profile: { _id: "u1" } } } });
     await expect(userService.getProfile("u1")).resolves.toEqual({ _id: "u1" });
     expect(api.get).toHaveBeenCalledWith("/users/u1/profile", { signal: undefined });
   });
 
   it("patches only the fields it is given", async () => {
-    vi.mocked(api.patch).mockResolvedValue({ data: { user: { _id: "me" } } });
+    vi.mocked(api.patch).mockResolvedValue({ data: { success: true, message: null, data: { user: { _id: "me" } } } });
     await userService.updateMe({ bio: "hello" });
     expect(api.patch).toHaveBeenCalledWith("/users/me", { bio: "hello" });
   });

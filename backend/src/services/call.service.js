@@ -1,14 +1,18 @@
+// @ts-check
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import { getCallMessageContent, getCallOutcome } from "../utils/call-outcome.util.js";
-import { emitNewMessage, updateConversationAfterCreateMessage } from "./message.service.js";
+import { messageService } from "./message.service.js";
 
 /**
- * Saves a call record ("Cuộc gọi thoại · 05:12", missed, rejected, ...) as a message in the
- * direct conversation of the two people and sends it to both. The caller is the sender.
- * Resolves to the message, or null when there is nothing to record.
+ * Lưu bản ghi cuộc gọi ("Cuộc gọi thoại", nhỡ, bị từ chối...) thành một tin nhắn trong hội thoại 1-1
+ * của hai người rồi gửi cho cả hai. Người gọi là người gửi.
+ * Trả tin nhắn, hoặc null khi không có gì để ghi (bắt máy ở thiết bị khác, không có hội thoại 1-1).
+ * @param {import("socket.io").Server} socketServer
+ * @param {import("../interfaces/call.interface.js").EndedCall} call
+ * @param {string} reason
  */
-export const recordCallMessage = async (io, call, reason) => {
+const recordCallMessage = async (socketServer, call, reason) => {
   const outcome = getCallOutcome(call, reason);
   if (!outcome) return null;
 
@@ -25,12 +29,15 @@ export const recordCallMessage = async (io, call, reason) => {
     call: { kind: call.kind, status: outcome.status, duration: outcome.duration },
   });
 
-  // The callee was just on the line, so a finished call is not an unread message for them.
+  // Người nhận vừa nghe máy, nên cuộc gọi đã hoàn tất không tính là tin chưa đọc của họ.
   const calleeUnread = conversation.unreadCounts?.get(call.calleeId) ?? 0;
-  updateConversationAfterCreateMessage(conversation, message, call.callerId);
+  messageService.updateConversationAfterCreateMessage(conversation, message, call.callerId);
   if (outcome.status === "completed") conversation.unreadCounts.set(call.calleeId, calleeUnread);
   await conversation.save();
 
-  await emitNewMessage(io, conversation, message);
+  await messageService.emitNewMessage(socketServer, conversation, message);
   return message;
 };
+
+/** @type {import("../interfaces/call.interface.js").CallService} */
+export const callService = { recordCallMessage };

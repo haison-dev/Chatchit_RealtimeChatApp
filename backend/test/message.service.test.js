@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { updateConversationAfterCreateMessage } from "../src/services/message.service.js";
+import { messageService } from "../src/services/message.service.js";
+const { updateConversationAfterCreateMessage } = messageService;
 
 test("updateConversationAfterCreateMessage updates preview and unread counters", () => {
   const conversation = {

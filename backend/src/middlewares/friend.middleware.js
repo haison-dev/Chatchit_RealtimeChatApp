@@ -1,75 +1,38 @@
-import Conversation from "../models/conversation.model.js";
+// @ts-check
 import mongoose from "mongoose";
-import { areFriends } from "../services/friend.service.js";
+import { friendService } from "../services/friend.service.js";
+import { AppError } from "../utils/app-error.util.js";
+import { asyncHandler } from "../utils/response.util.js";
 
-export const checkFriendship = async (req, res, next) => {
-  try {
-    const me = req.user._id.toString();
-    const recipientId = req.body?.recipientId ?? null;
-    const memberIds = req.body?.memberIds ?? [];
+/**
+ * Chỉ cho nhắn tin hoặc tạo hội thoại với bạn bè: kiểm tra `recipientId` (tin 1-1) hoặc `memberIds` (nhóm).
+ */
+export const checkFriendship = asyncHandler(async (req, _res, next) => {
+  const me = req.user._id.toString();
+  const recipientId = req.body?.recipientId ?? null;
+  const memberIds = req.body?.memberIds ?? [];
 
-    if (!recipientId && (!Array.isArray(memberIds) || memberIds.length === 0)) {
-      return res.status(400).json({ message: "Cần có người nhận hoặc danh sách thành viên." });
-    }
-
-    if (recipientId) {
-      if (!mongoose.isValidObjectId(recipientId) || recipientId === me) {
-        return res.status(400).json({ message: "Người nhận không hợp lệ." });
-      }
-
-      if (!(await areFriends(me, recipientId))) {
-        return res.status(403).json({ message: "Bạn chỉ có thể nhắn tin cho bạn bè." });
-      }
-
-      return next();
-    }
-
-    if (!Array.isArray(memberIds) || memberIds.some((id) => !mongoose.isValidObjectId(id) || id === me)) {
-      return res.status(400).json({ message: "Danh sách thành viên phải hợp lệ và không được có chính bạn." });
-    }
-
-    const friendChecks = memberIds.map(async (memberId) => {
-      return (await areFriends(me, memberId)) ? null : memberId;
-    });
-
-    const results = await Promise.all(friendChecks);
-    const notFriends = results.filter(Boolean);
-
-    if (notFriends.length > 0) {
-      return res.status(403).json({ message: `Bạn chỉ có thể thêm bạn bè vào cuộc trò chuyện. Chưa kết bạn với: ${notFriends.join(", ")}` });
-    }
-
-    next();
-
-  } catch (error) {
-    console.error("Lỗi khi kiểm tra quan hệ bạn bè:", error);
-    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
+  if (!recipientId && (!Array.isArray(memberIds) || memberIds.length === 0)) {
+    throw AppError.badRequest("Cần có người nhận hoặc danh sách thành viên.");
   }
-};
 
-export const checkGroupMembership = async (req, res, next) => {
-  try {
-    const { conversationId } = req.body;
-    const userId = req.user._id;
-
-    const conversation = await Conversation.findById(conversationId);
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Không tìm thấy cuộc trò chuyện." });
+  if (recipientId) {
+    if (typeof recipientId !== "string" || !mongoose.isValidObjectId(recipientId) || recipientId === me) {
+      throw AppError.badRequest("Người nhận không hợp lệ.");
     }
-
-    const isMember = conversation.participants.some((p) =>
-    p.userId.toString() === userId.toString());
-
-    if(!isMember){
-      return res.status(403).json({ message: "Bạn không phải thành viên của cuộc trò chuyện này." });
-    }
-
-    req.conversation = conversation;
-    next();
-
-  } catch (error) {
-    console.error("Lỗi khi kiểm tra thành viên nhóm:", error);
-    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
+    if (!(await friendService.areFriends(me, recipientId))) throw AppError.forbidden("Bạn chỉ có thể nhắn tin cho bạn bè.");
+    return next();
   }
-}
+
+  if (memberIds.some((/** @type {unknown} */ id) => typeof id !== "string" || !mongoose.isValidObjectId(id) || id === me)) {
+    throw AppError.badRequest("Danh sách thành viên phải hợp lệ và không được có chính bạn.");
+  }
+
+  const results = await Promise.all(memberIds.map(async (/** @type {string} */ memberId) =>
+    (await friendService.areFriends(me, memberId)) ? null : memberId));
+  const notFriends = results.filter(Boolean);
+  if (notFriends.length > 0) {
+    throw AppError.forbidden(`Bạn chỉ có thể thêm bạn bè vào cuộc trò chuyện. Chưa kết bạn với: ${notFriends.join(", ")}`);
+  }
+  return next();
+});

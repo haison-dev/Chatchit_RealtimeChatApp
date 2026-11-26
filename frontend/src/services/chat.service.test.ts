@@ -21,7 +21,7 @@ describe("chatService", () => {
 
   it("sends the cursor and correctly spelled limit parameter", async () => {
     vi.mocked(api.get).mockResolvedValue({
-      data: { messages: [], nextCursor: null },
+      data: { success: true, message: null, data: { messages: [], nextCursor: null } },
     });
 
     await chatService.fetchMessages("conversation-1", "2026-01-01T00:00:00.000Z");
@@ -35,7 +35,7 @@ describe("chatService", () => {
   });
 
   it("uses the exact mark-as-seen endpoint", async () => {
-    vi.mocked(api.patch).mockResolvedValue({ data: { message: "Marked as seen" } });
+    vi.mocked(api.patch).mockResolvedValue({ data: { success: true, message: "Đã đánh dấu đã xem", data: { seenBy: [], myUnreadCount: 0 } } });
 
     await chatService.markAsSeen("conversation-1");
 
@@ -43,7 +43,7 @@ describe("chatService", () => {
   });
 
   it("includes the stable client message ID when sending a direct message", async () => {
-    vi.mocked(api.post).mockResolvedValue({ data: { message: {} } });
+    vi.mocked(api.post).mockResolvedValue({ data: { success: true, message: null, data: { message: {} } } });
 
     await chatService.sendDirectMessage(
       "recipient-1",
@@ -64,9 +64,9 @@ describe("chatService", () => {
 
   it("uses protected group-management endpoints", async () => {
     const conversation = { _id: "conversation-1" };
-    vi.mocked(api.patch).mockResolvedValue({ data: { conversation } });
-    vi.mocked(api.post).mockResolvedValue({ data: { conversation } });
-    vi.mocked(api.delete).mockResolvedValue({ data: { conversation } });
+    vi.mocked(api.patch).mockResolvedValue({ data: { success: true, message: null, data: { conversation } } });
+    vi.mocked(api.post).mockResolvedValue({ data: { success: true, message: null, data: { conversation } } });
+    vi.mocked(api.delete).mockResolvedValue({ data: { success: true, message: null, data: { conversation } } });
 
     await chatService.renameGroup("conversation-1", "New name");
     await chatService.addGroupMembers("conversation-1", ["user-2"]);
@@ -82,10 +82,10 @@ describe("chatService", () => {
   });
 
   it("uses message mutation and search endpoints", async () => {
-    vi.mocked(api.patch).mockResolvedValue({ data: { message: {} } });
-    vi.mocked(api.delete).mockResolvedValue({ data: { message: {} } });
-    vi.mocked(api.post).mockResolvedValue({ data: { imageUrl: "/uploads/images/image-1" } });
-    vi.mocked(api.get).mockResolvedValue({ data: { messages: [] } });
+    vi.mocked(api.patch).mockResolvedValue({ data: { success: true, message: null, data: { message: {} } } });
+    vi.mocked(api.delete).mockResolvedValue({ data: { success: true, message: null, data: { message: {} } } });
+    vi.mocked(api.post).mockResolvedValue({ data: { success: true, message: null, data: { imageUrl: "/uploads/images/image-1" } } });
+    vi.mocked(api.get).mockResolvedValue({ data: { success: true, message: null, data: { messages: [] } } });
 
     await chatService.editMessage("message-1", "Updated");
     await chatService.deleteMessage("message-1");

@@ -5,7 +5,8 @@ import Friend from "../src/models/friend.model.js";
 import FriendRequest from "../src/models/friend-request.model.js";
 import User from "../src/models/user.model.js";
 import { getUserProfile, searchUsers, updateMe } from "../src/controllers/user.controller.js";
-import { friendPair } from "../src/services/friend.service.js";
+import { friendService } from "../src/services/friend.service.js";
+const { friendPair } = friendService;
 import { buildNameSearchPattern, sanitizeAvatarUrl } from "../src/utils/sanitize.util.js";
 
 const ME = "507f1f77bcf86cd799439011";
@@ -98,7 +99,7 @@ test("getUserProfile hides email and phone from strangers and shows mutual frien
   ], async () => {
     const res = createRes();
     await getUserProfile({ user: { _id: ME }, params: { userId: OTHER } }, res);
-    const { profile } = res.result.body;
+    const { profile } = res.result.body.data;
     assert.equal(res.result.statusCode, 200);
     assert.equal(profile.email, undefined);
     assert.equal(profile.phone, undefined);
@@ -119,7 +120,7 @@ test("getUserProfile shows contact info and the direct conversation to friends",
   ], async () => {
     const res = createRes();
     await getUserProfile({ user: { _id: ME }, params: { userId: OTHER } }, res);
-    const { profile } = res.result.body;
+    const { profile } = res.result.body.data;
     assert.equal(profile.relationship.status, "friend");
     assert.equal(profile.email, "f@example.com");
     assert.equal(profile.directConversationId, "conversation-1");
@@ -189,7 +190,7 @@ test("searchUsers lists friends before strangers and reports each relationship",
     const res = createRes();
     await searchUsers({ user: { _id: ME }, query: { q: "son" } }, res);
 
-    const { users } = res.result.body;
+    const { users } = res.result.body.data;
     assert.deepEqual(users.map((user) => user._id), [FRIEND, STRANGER]);
     assert.equal(users[0].relationship.status, "friend");
     assert.equal(users[1].relationship.status, "none");

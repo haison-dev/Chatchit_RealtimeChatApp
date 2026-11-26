@@ -48,7 +48,7 @@ test("signUp reports which normalized account field already exists", async () =>
     await signUp(req, res);
 
     assert.equal(res.result.statusCode, 409);
-    assert.equal(res.result.body.field, "username");
+    assert.equal(res.result.body.details.field, "username");
     assert.equal(res.result.body.code, "ACCOUNT_ALREADY_EXISTS");
   } finally {
     User.findOne = originalFindOne;

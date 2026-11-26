@@ -3,7 +3,8 @@ import test from "node:test";
 import Conversation from "../src/models/conversation.model.js";
 import Message from "../src/models/message.model.js";
 import { getCallMessageContent, getCallOutcome } from "../src/utils/call-outcome.util.js";
-import { recordCallMessage } from "../src/services/call.service.js";
+import { callService } from "../src/services/call.service.js";
+const { recordCallMessage } = callService;
 import { createCallHandlers } from "../src/socket/call.handler.js";
 import Friend from "../src/models/friend.model.js";
 

@@ -1,19 +1,17 @@
 import api from "@/lib/axios";
+import { unwrap } from "@/lib/api-response";
 import type { UpdateProfileInput, User, UserProfile, UserSearchResult } from "@/interfaces/user.interface";
 
 export const userService = {
   async searchUsers(query: string, signal?: AbortSignal) {
-    const res = await api.get("/users", { params: { q: query }, signal });
-    return res.data.users as UserSearchResult[];
+    return unwrap<{ users: UserSearchResult[] }>(await api.get("/users", { params: { q: query }, signal })).users;
   },
 
   async getProfile(userId: string, signal?: AbortSignal) {
-    const res = await api.get(`/users/${userId}/profile`, { signal });
-    return res.data.profile as UserProfile;
+    return unwrap<{ profile: UserProfile }>(await api.get(`/users/${userId}/profile`, { signal })).profile;
   },
 
   async updateMe(input: UpdateProfileInput) {
-    const res = await api.patch("/users/me", input);
-    return res.data.user as User;
+    return unwrap<{ user: User }>(await api.patch("/users/me", input)).user;
   },
 };

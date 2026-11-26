@@ -1,54 +1,37 @@
-import mongoose from "mongoose";
-import Conversation from "../models/conversation.model.js";
+// @ts-check
+import { conversationService } from "../services/conversation.service.js";
+import { AppError } from "../utils/app-error.util.js";
+import { asyncHandler, sendError } from "../utils/response.util.js";
 
-const getConversationId = (req) =>
-  req.params?.conversationId ?? req.body?.conversationId;
+/** @typedef {import("express").Request} Request */
 
-export const requireConversationMember = async (req, res, next) => {
-  try {
-    const conversationId = getConversationId(req);
+/** @param {Request} req */
+const getConversationId = (req) => req.params?.conversationId ?? req.body?.conversationId;
 
-    if (!conversationId || !mongoose.isValidObjectId(conversationId)) {
-      return res.status(400).json({ message: "Mã cuộc trò chuyện không hợp lệ." });
-    }
-
-    const conversation = await Conversation.findOne({
-      _id: conversationId,
-      "participants.userId": req.user._id,
-    });
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Không tìm thấy cuộc trò chuyện." });
-    }
-
-    req.conversation = conversation;
-    return next();
-  } catch (error) {
-    console.error("Lỗi khi kiểm tra quyền vào cuộc trò chuyện:", error);
-    return res.status(500).json({ message: "Lỗi máy chủ. Vui lòng thử lại sau." });
-  }
+/** @param {Request} req */
+const isGroupAdmin = (req) => {
+  const userId = req.user._id.toString();
+  const adminIds = req.conversation.group?.admins?.map(String) ?? [];
+  // Nhóm cũ chưa có danh sách admin: người tạo là admin.
+  const isLegacyOwner = adminIds.length === 0 && req.conversation.group?.createdBy?.toString() === userId;
+  return adminIds.includes(userId) || isLegacyOwner;
 };
 
-export const requireGroupMember = (req, res, next) => {
-  if (req.conversation?.type !== "group") {
-    return res.status(400).json({ message: "Thao tác này chỉ dùng cho nhóm chat." });
-  }
+/** Kiểm tra ObjectId và quyền thành viên, rồi gắn req.conversation để controller dùng lại. */
+export const requireConversationMember = asyncHandler(async (req, _res, next) => {
+  req.conversation = await conversationService.findMemberConversation(req.user._id, getConversationId(req));
+  next();
+});
 
+/** Chạy sau requireConversationMember. @type {import("express").RequestHandler} */
+export const requireGroupMember = (req, res, next) => {
+  if (req.conversation?.type !== "group") return sendError(res, AppError.badRequest("Thao tác này chỉ dùng cho nhóm chat."));
   return next();
 };
 
+/** Chạy sau requireConversationMember. @type {import("express").RequestHandler} */
 export const requireGroupAdmin = (req, res, next) => {
-  if (req.conversation?.type !== "group") {
-    return res.status(400).json({ message: "Thao tác này chỉ dùng cho nhóm chat." });
-  }
-
-  const userId = req.user._id.toString();
-  const adminIds = req.conversation.group?.admins?.map(String) ?? [];
-  const isLegacyOwner = adminIds.length === 0 && req.conversation.group?.createdBy?.toString() === userId;
-
-  if (!adminIds.includes(userId) && !isLegacyOwner) {
-    return res.status(403).json({ message: "Chỉ quản trị viên nhóm mới làm được thao tác này." });
-  }
-
+  if (req.conversation?.type !== "group") return sendError(res, AppError.badRequest("Thao tác này chỉ dùng cho nhóm chat."));
+  if (!isGroupAdmin(req)) return sendError(res, AppError.forbidden("Chỉ quản trị viên nhóm mới làm được thao tác này."));
   return next();
 };

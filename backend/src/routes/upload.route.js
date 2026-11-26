@@ -1,6 +1,8 @@
 import express from "express";
 import { getImage, uploadImage } from "../controllers/upload.controller.js";
 import { uploadLimiter } from "../middlewares/security.middleware.js";
+import { AppError } from "../utils/app-error.util.js";
+import { sendError } from "../utils/response.util.js";
 
 const router = express.Router();
 
@@ -9,7 +11,7 @@ router.get("/images/:imageId", getImage);
 
 router.use((error, _req, res, next) => {
   if (error?.type === "entity.too.large") {
-    return res.status(413).json({ message: "Ảnh không được lớn hơn 5 MB." });
+    return sendError(res, AppError.payloadTooLarge("Ảnh không được lớn hơn 5 MB."));
   }
   return next(error);
 });

@@ -70,8 +70,11 @@ test("conversation API returns cursor-paginated history to members", async () =>
     );
 
     assert.equal(response.status, 200);
-    assert.equal(response.body.messages.length, 2);
-    assert.equal(response.body.nextCursor, "2026-01-01T00:00:00.000Z");
+    assert.equal(response.body.data.messages.length, 2);
+    // Mốc là tin cũ nhất đã trả về (02/01): trang sau lấy tin cũ hơn mốc nên vẫn có tin 01/01.
+    // Trước đây mốc là bản thừa (01/01) và tin đó không bao giờ được tải.
+    assert.equal(response.body.data.nextCursor, "2026-01-02T00:00:00.000Z");
+    assert.deepEqual(response.body.data.messages.map((message) => message.createdAt), ["2026-01-02T00:00:00.000Z", "2026-01-03T00:00:00.000Z"]);
   } finally {
     Conversation.findOne = originalFindOne;
     Message.find = originalMessageFind;

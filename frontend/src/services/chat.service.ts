@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
-import type { ConversationResponse, Message } from "@/interfaces/chat.interface";
+import type { Conversation, ConversationResponse, Message } from "@/interfaces/chat.interface";
+import { unwrap } from "@/lib/api-response";
 
 interface FetchMessageProps {
   messages: Message[];
@@ -10,16 +11,14 @@ const pageLimit = 50;
 
 export const chatService = {
   async fetchConversations(): Promise<ConversationResponse> {
-    const res = await api.get("/conversations");
-    return res.data;
+    return unwrap<ConversationResponse>(await api.get("/conversations"));
   },
 
   async fetchMessages(id: string, cursor?: string): Promise<FetchMessageProps> {
-    const res = await api.get(`/conversations/${id}/messages`, {
+    const page = unwrap<{ messages: Message[]; nextCursor: string | null }>(await api.get(`/conversations/${id}/messages`, {
       params: { limit: pageLimit, cursor: cursor || undefined },
-    });
-
-    return { messages: res.data.messages, cursor: res.data.nextCursor };
+    }));
+    return { messages: page.messages, cursor: page.nextCursor ?? undefined };
   },
 
   async sendDirectMessage(
@@ -29,11 +28,9 @@ export const chatService = {
     imgUrl?: string,
     conversationId?: string,
   ) {
-    const res = await api.post("/messages/direct", {
-        recipientId, content, clientMessageId, imgUrl, conversationId
-    })
-
-    return res.data.message;
+    return unwrap<{ message: Message }>(await api.post("/messages/direct", {
+      recipientId, content, clientMessageId, imgUrl, conversationId,
+    })).message;
   },
 
   async sendGroupMessage(
@@ -42,41 +39,33 @@ export const chatService = {
     clientMessageId: string,
     imgUrl?: string,
   ) {
-    const res = await api.post("/messages/group", {
-        conversationId, content, clientMessageId, imgUrl
-    })
-
-    return res.data.message;
+    return unwrap<{ message: Message }>(await api.post("/messages/group", {
+      conversationId, content, clientMessageId, imgUrl,
+    })).message;
   },
 
   async markAsSeen(conversationId: string) {
-    const res = await api.patch(`/conversations/${conversationId}/seen`);
-    return res.data;  
+    await api.patch(`/conversations/${conversationId}/seen`);
   },
 
   async createConversation (type: "direct" | "group", name: string, memberIds: string[]) {
-    const res = await api.post("/conversations", {type, name, memberIds});
-    return res.data.conversation;
+    return unwrap<{ conversation: Conversation }>(await api.post("/conversations", { type, name, memberIds })).conversation;
   },
 
   async renameGroup(conversationId: string, name: string) {
-    const res = await api.patch(`/conversations/${conversationId}/group`, { name });
-    return res.data.conversation;
+    return unwrap<{ conversation: Conversation }>(await api.patch(`/conversations/${conversationId}/group`, { name })).conversation;
   },
 
   async addGroupMembers(conversationId: string, memberIds: string[]) {
-    const res = await api.post(`/conversations/${conversationId}/members`, { memberIds });
-    return res.data.conversation;
+    return unwrap<{ conversation: Conversation }>(await api.post(`/conversations/${conversationId}/members`, { memberIds })).conversation;
   },
 
   async removeGroupMember(conversationId: string, memberId: string) {
-    const res = await api.delete(`/conversations/${conversationId}/members/${memberId}`);
-    return res.data.conversation;
+    return unwrap<{ conversation: Conversation }>(await api.delete(`/conversations/${conversationId}/members/${memberId}`)).conversation;
   },
 
   async updateGroupAdmin(conversationId: string, memberId: string, isAdmin: boolean) {
-    const res = await api.patch(`/conversations/${conversationId}/admins/${memberId}`, { isAdmin });
-    return res.data.conversation;
+    return unwrap<{ conversation: Conversation }>(await api.patch(`/conversations/${conversationId}/admins/${memberId}`, { isAdmin })).conversation;
   },
 
   async deleteConversation(conversationId: string) {
@@ -88,36 +77,32 @@ export const chatService = {
   },
 
   async uploadImage(file: File) {
-    const res = await api.post("/uploads/images", file, {
+    return unwrap<{ imageUrl: string }>(await api.post("/uploads/images", file, {
       headers: { "Content-Type": file.type },
-    });
-    return res.data.imageUrl as string;
+    })).imageUrl;
   },
 
+  /** Ảnh trả về dạng dữ liệu thô, không bọc trong { success, data }. */
   async getImage(imageUrl: string) {
     const res = await api.get(imageUrl, { responseType: "blob" });
     return res.data as Blob;
   },
 
   async editMessage(messageId: string, content: string) {
-    const res = await api.patch(`/messages/${messageId}`, { content });
-    return res.data.message as Message;
+    return unwrap<{ message: Message }>(await api.patch(`/messages/${messageId}`, { content })).message;
   },
 
   async deleteMessage(messageId: string) {
-    const res = await api.delete(`/messages/${messageId}`);
-    return res.data.message as Message;
+    return unwrap<{ message: Message }>(await api.delete(`/messages/${messageId}`)).message;
   },
 
   async reactToMessage(messageId: string, emoji: string) {
-    const res = await api.put(`/messages/${messageId}/reaction`, { emoji });
-    return res.data.message as Message;
+    return unwrap<{ message: Message }>(await api.put(`/messages/${messageId}/reaction`, { emoji })).message;
   },
 
   async searchMessages(conversationId: string, query: string) {
-    const res = await api.get(`/conversations/${conversationId}/messages/search`, {
+    return unwrap<{ messages: Message[] }>(await api.get(`/conversations/${conversationId}/messages/search`, {
       params: { q: query },
-    });
-    return res.data.messages as Message[];
+    })).messages;
   },
 };

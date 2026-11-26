@@ -1,20 +1,18 @@
 import api from "@/lib/axios";
+import { unwrap } from "@/lib/api-response";
 import type { AdminStats, AdminUserPage, AdminUserSessions } from "@/interfaces/admin.interface";
 
 export const adminService = {
   async getStats(signal?: AbortSignal) {
-    const res = await api.get("/admin/stats", { signal });
-    return res.data as AdminStats;
+    return unwrap<AdminStats>(await api.get("/admin/stats", { signal }));
   },
 
   async listUsers(query: string, page: number, signal?: AbortSignal) {
-    const res = await api.get("/admin/users", { params: { q: query || undefined, page }, signal });
-    return res.data as AdminUserPage;
+    return unwrap<AdminUserPage>(await api.get("/admin/users", { params: { q: query || undefined, page }, signal }));
   },
 
   async getUserSessions(userId: string, signal?: AbortSignal) {
-    const res = await api.get(`/admin/users/${userId}/sessions`, { signal });
-    return res.data as AdminUserSessions;
+    return unwrap<AdminUserSessions>(await api.get(`/admin/users/${userId}/sessions`, { signal }));
   },
 
   async revokeSession(sessionId: string) {
@@ -22,7 +20,6 @@ export const adminService = {
   },
 
   async revokeUserSessions(userId: string) {
-    const res = await api.delete(`/admin/users/${userId}/sessions`);
-    return res.data.revoked as number;
+    return unwrap<{ revoked: number }>(await api.delete(`/admin/users/${userId}/sessions`)).revoked;
   },
 };

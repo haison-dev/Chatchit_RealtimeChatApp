@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { areFriends } from "../services/friend.service.js";
-import { recordCallMessage } from "../services/call.service.js";
+import { friendService } from "../services/friend.service.js";
+import { callService } from "../services/call.service.js";
 import { CALL_KINDS } from "../utils/call-outcome.util.js";
 import { createCallManager } from "./call.manager.js";
 import { createEventLimiter } from "../utils/event-limiter.util.js";
@@ -17,7 +17,7 @@ const isPlainObject = (value) => value !== null && typeof value === "object" && 
  * call setup (ring/accept/reject/hang up) and the SDP/ICE exchange.
  * Call once per server, then call the returned function for every socket.
  */
-export const createCallHandlers = (io, { recordCall = recordCallMessage } = {}) => {
+export const createCallHandlers = (io, { recordCall = (socketServer, call, reason) => callService.recordCallMessage(socketServer, call, reason) } = {}) => {
   const emitEnded = (call, reason) => {
     // The conversation keeps a record of every call that ended (duration, missed, rejected, ...).
     Promise.resolve(recordCall(io, call, reason)).catch((error) => console.error("Lỗi khi lưu lịch sử cuộc gọi:", error));
@@ -53,7 +53,7 @@ export const createCallHandlers = (io, { recordCall = recordCallMessage } = {}) 
       if (!isId(calleeId) || calleeId === userId || !CALL_KINDS.includes(kind)) {
         return acknowledge({ ok: false, reason: "invalid" });
       }
-      if (!(await areFriends(userId, calleeId))) return acknowledge({ ok: false, reason: "not_friends" });
+      if (!(await friendService.areFriends(userId, calleeId))) return acknowledge({ ok: false, reason: "not_friends" });
       if (!isOnline(calleeId)) return acknowledge({ ok: false, reason: "offline" });
 
       const result = manager.start({ callerId: userId, calleeId, kind, callerSocketId: socket.id });

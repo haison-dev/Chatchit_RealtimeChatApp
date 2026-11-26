@@ -1,36 +1,70 @@
+// @ts-check
 import { rateLimit } from "express-rate-limit";
+import { AppError } from "../utils/app-error.util.js";
+import { sendError } from "../utils/response.util.js";
 import { hasUnsafeKeys } from "../utils/sanitize.util.js";
 
-// Rejects JSON bodies that try to smuggle MongoDB operators or pollute prototypes,
-// e.g. { "recipientId": { "$ne": null } }. Express 5 parses query strings with the
-// "simple" parser, which never produces nested objects, so only the body is checked.
+/**
+ * Chặn body JSON cố chèn toán tử MongoDB hoặc làm bẩn prototype, ví dụ { "recipientId": { "$ne": null } }.
+ * Express 5 đọc query string bằng parser "simple", không bao giờ tạo object lồng nhau, nên chỉ cần kiểm tra body.
+ * @type {import("express").RequestHandler}
+ */
 export const rejectUnsafePayload = (req, res, next) => {
   if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body) && hasUnsafeKeys(req.body)) {
-    return res.status(400).json({ message: "Yêu cầu chứa trường dữ liệu không hợp lệ." });
+    return sendError(res, AppError.badRequest("Yêu cầu chứa trường dữ liệu không hợp lệ."));
   }
   return next();
 };
 
-// Translates body-parser errors into JSON responses instead of HTML stack pages.
-export const handleBodyParserErrors = (error, _req, res, next) => {
-  if (error?.type === "entity.too.large") {
-    return res.status(413).json({ message: "Dữ liệu gửi lên quá lớn." });
-  }
-  if (error?.type === "entity.parse.failed") {
-    return res.status(400).json({ message: "Dữ liệu gửi lên không phải JSON hợp lệ." });
-  }
-  return next(error);
-};
+/**
+ * @typedef {Object} LimiterOptions
+ * @property {number} windowMs
+ * @property {number} limit
+ * @property {string} message Thông báo khi vượt giới hạn.
+ */
 
-// Limiters for authenticated routes are keyed by user, so users behind the same
-// NAT are not throttled together. They must run after protectedRoute.
-const createUserLimiter = ({ windowMs, limit, message }) => rateLimit({
+/**
+ * Cấu hình chung của mọi limiter: response 429 theo dạng lỗi chuẩn.
+ * @param {LimiterOptions} options
+ * @param {import("express-rate-limit").Options["keyGenerator"]} [keyGenerator]
+ */
+const createLimiter = ({ windowMs, limit, message }, keyGenerator) => rateLimit({
   windowMs,
   limit,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  keyGenerator: (req) => req.user._id.toString(),
-  message: { message },
+  ...(keyGenerator ? { keyGenerator } : {}),
+  handler: (_req, res) => {
+    sendError(res, AppError.tooManyRequests(message));
+  },
+});
+
+/** Limiter theo IP, cho route công khai (đăng nhập, đăng ký). @param {LimiterOptions} options */
+export const createIpLimiter = (options) => createLimiter(options);
+
+/**
+ * Limiter theo người dùng, để những người dùng chung mạng (NAT) không bị giới hạn cùng nhau.
+ * Phải chạy sau protectedRoute.
+ * @param {LimiterOptions} options
+ */
+export const createUserLimiter = (options) => createLimiter(options, (req) => req.user._id.toString());
+
+export const authLimiter = createIpLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  message: "Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.",
+});
+
+export const signUpLimiter = createIpLimiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  message: "Đã tạo quá nhiều tài khoản từ địa chỉ này. Vui lòng thử lại sau.",
+});
+
+export const refreshLimiter = createIpLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  message: "Làm mới phiên đăng nhập quá nhiều lần. Vui lòng thử lại sau.",
 });
 
 export const messageLimiter = createUserLimiter({
@@ -69,6 +103,12 @@ export const profileLimiter = createUserLimiter({
   message: "Bạn xem hồ sơ quá nhiều. Vui lòng đợi một lát.",
 });
 
+export const profileUpdateLimiter = createUserLimiter({
+  windowMs: 10 * 60 * 1000,
+  limit: 20,
+  message: "Bạn cập nhật hồ sơ quá nhiều lần. Vui lòng thử lại sau.",
+});
+
 export const adminLimiter = createUserLimiter({
   windowMs: 60 * 1000,
   limit: 120,
@@ -79,10 +119,4 @@ export const adminActionLimiter = createUserLimiter({
   windowMs: 10 * 60 * 1000,
   limit: 60,
   message: "Bạn đăng xuất thiết bị quá nhiều lần. Vui lòng thử lại sau.",
-});
-
-export const profileUpdateLimiter = createUserLimiter({
-  windowMs: 10 * 60 * 1000,
-  limit: 20,
-  message: "Bạn cập nhật hồ sơ quá nhiều lần. Vui lòng thử lại sau.",
 });

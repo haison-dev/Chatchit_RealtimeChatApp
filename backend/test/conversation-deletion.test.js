@@ -3,9 +3,10 @@ import test from "node:test";
 import Conversation from "../src/models/conversation.model.js";
 import Message from "../src/models/message.model.js";
 import { deleteConversation, getConversations, getMessages } from "../src/controllers/conversation.controller.js";
-import { searchMessages } from "../src/controllers/message-action.controller.js";
+import { searchMessages } from "../src/controllers/message.controller.js";
 import { getClearedAt, unhideConversation, withClearedAtFilter } from "../src/utils/conversation.util.js";
-import { updateConversationAfterCreateMessage } from "../src/services/message.service.js";
+import { messageService } from "../src/services/message.service.js";
+const { updateConversationAfterCreateMessage } = messageService;
 
 const ME = "507f1f77bcf86cd799439011";
 const FRIEND = "507f1f77bcf86cd799439012";
@@ -54,7 +55,8 @@ test("deleteConversation hides a direct conversation for the current user only",
     const res = createRes();
     await deleteConversation({ user: { _id: ME }, conversation: conversationWith() }, res);
 
-    assert.equal(res.result.statusCode, 204);
+    assert.equal(res.result.statusCode, 200);
+    assert.equal(res.result.body.success, true);
     assert.equal(call.filter["participants.userId"], ME, "only the caller's participant entry is touched");
     assert.equal(call.update.$set["participants.$.hidden"], true);
     assert.ok(call.update.$set["participants.$.clearedAt"] instanceof Date);

@@ -9,7 +9,8 @@ import { listUsers, revokeSession, revokeUserSessions } from "../src/controllers
 import { requireAdmin } from "../src/middlewares/admin.middleware.js";
 import { protectedRoute } from "../src/middlewares/auth.middleware.js";
 import { buildDailySeries, startOfVietnamDay, vietnamDayKey } from "../src/utils/admin-stats.util.js";
-import { isSessionActive } from "../src/services/session.service.js";
+import { sessionService } from "../src/services/session.service.js";
+const { isSessionActive } = sessionService;
 import { describeUserAgent } from "../src/utils/user-agent.util.js";
 
 process.env.ACCESS_TOKEN_SECRET ??= "test-secret";
@@ -128,7 +129,7 @@ test("signIn lưu thiết bị và đưa id phiên vào access token", async () 
     assert.equal(created.ip, "203.0.113.5");
     assert.match(created.userAgent, /Windows/);
     assert.ok(created.lastUsedAt instanceof Date);
-    assert.equal(jwt.decode(res.result.body.accessToken).sid, OTHER);
+    assert.equal(jwt.decode(res.result.body.data.accessToken).sid, OTHER);
   });
 });
 
@@ -146,9 +147,9 @@ test("listUsers kèm số thiết bị và từ chối tham số dạng mảng",
     await listUsers(adminReq({ query: { q: "an", page: "1" } }), res);
 
     assert.equal(res.result.statusCode, 200);
-    assert.equal(res.result.body.total, 1);
+    assert.equal(res.result.body.data.total, 1);
     assert.deepEqual(
-      { sessionCount: res.result.body.users[0].sessionCount, role: res.result.body.users[0].role, online: res.result.body.users[0].online },
+      { sessionCount: res.result.body.data.users[0].sessionCount, role: res.result.body.data.users[0].role, online: res.result.body.data.users[0].online },
       { sessionCount: 2, role: "user", online: false },
     );
   });
@@ -189,7 +190,7 @@ test("revokeUserSessions đăng xuất mọi thiết bị trừ thiết bị adm
     await revokeUserSessions(adminReq({ params: { userId: ADMIN } }), res);
 
     assert.equal(res.result.statusCode, 200);
-    assert.equal(res.result.body.revoked, 1);
+    assert.equal(res.result.body.data.revoked, 1);
     assert.deepEqual(findFilter, { userId: ADMIN, _id: { $ne: CURRENT } });
     assert.deepEqual(deleteFilter, { _id: { $in: [OTHER] } });
   });
