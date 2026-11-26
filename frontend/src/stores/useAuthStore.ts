@@ -113,6 +113,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refresh: async () => {
+        // The user is persisted, so without one this browser was never signed in (or signed out).
+        const wasSignedIn = Boolean(get().user);
         try {
           set({ loading: true });
           const { user, fetchMe, setAccessToken } = get();
@@ -129,7 +131,8 @@ export const useAuthStore = create<AuthState>()(
           // A network error or a restarting server must not sign the user out.
           const rejected = isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403);
           if (rejected) {
-            toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+            // A new visitor has no session that could have expired: send them to sign in quietly.
+            if (wasSignedIn) toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
             get().clearState();
           } else {
             toast.error("Không thể kết nối tới máy chủ. Vui lòng tải lại trang.");
