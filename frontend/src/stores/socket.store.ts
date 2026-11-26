@@ -1,10 +1,10 @@
 ﻿import { create } from "zustand";
 import { io, type Socket } from "socket.io-client";
-import { useAuthStore } from "./useAuthStore";
-import type { SocketState } from "@/types/store";
-import { useChatStore } from "./useChatStore";
-import { useFriendStore } from "./useFriendStore";
-import { useCallStore } from "./useCallStore";
+import { useAuthStore } from "./auth.store";
+import type { SocketState } from "@/interfaces/store.interface";
+import { useChatStore } from "./chat.store";
+import { useFriendStore } from "./friend.store";
+import { useCallStore } from "./call.store";
 import { toast } from "sonner";
 
 const baseUrl = import.meta.env.VITE_SOCKET_URL;

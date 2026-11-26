@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import UserSearchBox from "./UserSearchBox";
 import UserSearchResults from "./UserSearchResults";
-import { userService } from "@/services/userService";
-import type { UserSearchResult } from "@/types/user";
+import { userService } from "@/services/user.service";
+import type { UserSearchResult } from "@/interfaces/user.interface";
 
-vi.mock("@/services/userService", () => ({
+vi.mock("@/services/user.service", () => ({
   userService: { getProfile: vi.fn(), searchUsers: vi.fn(), updateMe: vi.fn() },
 }));
 

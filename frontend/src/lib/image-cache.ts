@@ -1,4 +1,4 @@
-import { chatService } from "@/services/chatService";
+import { chatService } from "@/services/chat.service";
 
 // Images are fetched through the authenticated API as blobs. Cache the object
 // URLs so switching conversations or scrolling does not download them again.

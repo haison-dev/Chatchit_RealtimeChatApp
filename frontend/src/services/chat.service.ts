@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import type { ConversationResponse, Message } from "@/types/chat";
+import type { ConversationResponse, Message } from "@/interfaces/chat.interface";
 
 interface FetchMessageProps {
   messages: Message[];

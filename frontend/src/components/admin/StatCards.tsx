@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { MessageCircle, MonitorSmartphone, UserPlus, Users, Wifi } from "lucide-react";
 import { formatNumber } from "@/lib/admin";
-import type { AdminStats } from "@/types/admin";
+import type { AdminStats } from "@/interfaces/admin.interface";
 import { Card } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 

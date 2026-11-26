@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, useParams } from "react-router";
 import { CHAT_PATH } from "@/lib/routes";
-import { useChatStore } from "@/stores/useChatStore";
+import { useChatStore } from "@/stores/chat.store";
 import ChatWindowLayout from "./ChatWindowLayout";
 import ChatWindowSkeleton from "./ChatWindowSkeleton";
 

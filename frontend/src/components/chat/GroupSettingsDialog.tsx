@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Crown, LogOut, Settings, UserMinus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import type { Conversation } from "@/types/chat";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
-import { useFriendStore } from "@/stores/useFriendStore";
-import { getApiErrorMessage } from "@/lib/apiError";
+import type { Conversation } from "@/interfaces/chat.interface";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
+import { useFriendStore } from "@/stores/friend.store";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Input } from "../ui/input";

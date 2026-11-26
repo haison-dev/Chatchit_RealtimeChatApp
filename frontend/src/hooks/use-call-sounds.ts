@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { unlockAudio } from "@/lib/chime";
 import { startRinging } from "@/lib/ringtone";
-import { useCallStore } from "@/stores/useCallStore";
+import { useCallStore } from "@/stores/call.store";
 
 /**
  * Plays the ringtone for an incoming call and the waiting tone while our call rings.

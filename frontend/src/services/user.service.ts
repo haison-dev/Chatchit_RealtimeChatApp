@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import type { UpdateProfileInput, User, UserProfile, UserSearchResult } from "@/types/user";
+import type { UpdateProfileInput, User, UserProfile, UserSearchResult } from "@/interfaces/user.interface";
 
 export const userService = {
   async searchUsers(query: string, signal?: AbortSignal) {

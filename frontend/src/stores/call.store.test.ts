@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
-import { useCallStore } from "./useCallStore";
-import { useSocketStore } from "./useSocketStore";
+import { useCallStore } from "./call.store";
+import { useSocketStore } from "./socket.store";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 

@@ -2,23 +2,23 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { chatService } from "@/services/chatService";
-import { friendService } from "@/services/friendService";
-import { userService } from "@/services/userService";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
-import { useFriendStore } from "@/stores/useFriendStore";
-import type { Conversation } from "@/types/chat";
+import { chatService } from "@/services/chat.service";
+import { friendService } from "@/services/friend.service";
+import { userService } from "@/services/user.service";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
+import { useFriendStore } from "@/stores/friend.store";
+import type { Conversation } from "@/interfaces/chat.interface";
 import ChatAppPage from "./ChatAppPage";
 
-vi.mock("@/services/chatService", () => ({
+vi.mock("@/services/chat.service", () => ({
   chatService: { fetchMessages: vi.fn(), fetchConversations: vi.fn(), markAsSeen: vi.fn(), createConversation: vi.fn() },
 }));
-vi.mock("@/services/friendService", () => ({ friendService: { getFriendList: vi.fn(), getAllFriendRequests: vi.fn() } }));
-vi.mock("@/services/userService", () => ({ userService: { getProfile: vi.fn(), searchUsers: vi.fn(), updateMe: vi.fn() } }));
+vi.mock("@/services/friend.service", () => ({ friendService: { getFriendList: vi.fn(), getAllFriendRequests: vi.fn() } }));
+vi.mock("@/services/user.service", () => ({ userService: { getProfile: vi.fn(), searchUsers: vi.fn(), updateMe: vi.fn() } }));
 // The open chat has its own tests; here only which screen is shown matters.
 vi.mock("@/components/chat/ChatWindowLayout", async () => {
-  const { useChatStore: store } = await import("@/stores/useChatStore");
+  const { useChatStore: store } = await import("@/stores/chat.store");
   return { default: () => <div>Đang mở: {store((s) => s.activeConversationId) ?? "không có"}</div> };
 });
 vi.mock("@/components/call/CallOverlay", () => ({ default: () => null }));

@@ -3,9 +3,9 @@ import { Link, useLocation } from "react-router";
 import { MessageCircle, Users } from "lucide-react";
 import { CHAT_PATH, FRIENDS_PATH, profilePath } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
+import { useFriendStore } from "@/stores/friend.store";
 import UserAvatar from "../chat/UserAvatar";
 import CountBadge from "../CountBadge";
 

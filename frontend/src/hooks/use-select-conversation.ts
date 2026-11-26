@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useChatStore } from "@/stores/useChatStore";
+import { useChatStore } from "@/stores/chat.store";
 import { useShowConversation } from "./use-show-conversation";
 
 /** What tapping a conversation in a list does: activate it, show it and load its messages. */

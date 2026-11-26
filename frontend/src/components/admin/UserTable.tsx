@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, MonitorSmartphone, SearchX } from "lucide-react";
 import { formatDate, formatNumber } from "@/lib/admin";
-import type { AdminUser, AdminUserPage } from "@/types/admin";
+import type { AdminUser, AdminUserPage } from "@/interfaces/admin.interface";
 import UserAvatar from "../chat/UserAvatar";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";

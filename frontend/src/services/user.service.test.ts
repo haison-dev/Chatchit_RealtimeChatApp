@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import api from "@/lib/axios";
 import { isHttpsUrl } from "@/lib/sanitize";
-import { userService } from "./userService";
+import { userService } from "./user.service";
 
 vi.mock("@/lib/axios", () => ({
   default: { get: vi.fn(), patch: vi.fn() },

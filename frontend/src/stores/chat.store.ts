@@ -1,11 +1,11 @@
-import { chatService } from "@/services/chatService";
-import type { ChatState } from "@/types/store";
+import { chatService } from "@/services/chat.service";
+import type { ChatState } from "@/interfaces/store.interface";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { useAuthStore } from "./useAuthStore";
-import { useSocketStore } from "./useSocketStore";
-import type { Message } from "@/types/chat";
-import { mergeMessages } from "@/lib/messageState";
+import { useAuthStore } from "./auth.store";
+import { useSocketStore } from "./socket.store";
+import type { Message } from "@/interfaces/chat.interface";
+import { mergeMessages } from "@/lib/message-state";
 
 const createClientMessageId = () =>
   globalThis.crypto?.randomUUID?.() ??

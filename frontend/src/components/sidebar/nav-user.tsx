@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { User } from "@/types/user";
+import type { User } from "@/interfaces/user.interface";
 import Logout from "../auth/Logout";
 import { Link } from "react-router";
 import { ADMIN_PATH, profilePath } from "@/lib/routes";

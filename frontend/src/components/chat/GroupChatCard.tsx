@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
 import { useSelectConversation } from "@/hooks/use-select-conversation";
-import type { Conversation } from "@/types/chat";
+import type { Conversation } from "@/interfaces/chat.interface";
 import { cn } from "@/lib/utils";
 import UnreadCountBadge from "./UnreadCountBadge";
 import GroupChatAvatar from "./GroupChatAvatar";

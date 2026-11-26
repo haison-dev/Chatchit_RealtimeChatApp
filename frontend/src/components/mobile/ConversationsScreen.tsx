@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { MessagesSquare } from "lucide-react";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { FRIENDS_PATH } from "@/lib/routes";
-import { useChatStore } from "@/stores/useChatStore";
+import { useChatStore } from "@/stores/chat.store";
 import Logo from "../brand/Logo";
 import DirectMessageCard from "../chat/DirectMessageCard";
 import GroupChatCard from "../chat/GroupChatCard";

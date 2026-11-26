@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import type { AdminStats, AdminUserPage, AdminUserSessions } from "@/types/admin";
+import type { AdminStats, AdminUserPage, AdminUserSessions } from "@/interfaces/admin.interface";
 
 export const adminService = {
   async getStats(signal?: AbortSignal) {

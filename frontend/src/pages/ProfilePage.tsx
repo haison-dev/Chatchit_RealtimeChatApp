@@ -10,7 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { CHAT_PATH } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore } from "@/stores/auth.store";
 
 /** /profile/:userId, a full screen (not a popup). On a phone, your own profile is the account tab. */
 const ProfilePage = () => {

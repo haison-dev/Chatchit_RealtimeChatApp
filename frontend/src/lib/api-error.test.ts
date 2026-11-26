@@ -1,6 +1,6 @@
 import axios from "axios";
 import { describe, expect, it } from "vitest";
-import { getApiErrorMessage } from "./apiError";
+import { getApiErrorMessage } from "./api-error";
 
 describe("getApiErrorMessage", () => {
   it("returns the API message for an Axios error", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Message } from "@/types/chat";
-import { mergeMessages } from "./messageState";
+import type { Message } from "@/interfaces/chat.interface";
+import { mergeMessages } from "./message-state";
 
 const optimistic: Message = {
   _id: "client-12345678",

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Loader2, Send, X } from "lucide-react";
 import { toast } from "sonner";
-import type { Conversation } from "@/types/chat";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
-import { useSocketStore } from "@/stores/useSocketStore";
-import { chatService } from "@/services/chatService";
+import type { Conversation } from "@/interfaces/chat.interface";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
+import { useSocketStore } from "@/stores/socket.store";
+import { chatService } from "@/services/chat.service";
 import { MESSAGE_MAX_LENGTH, sanitizeText } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";

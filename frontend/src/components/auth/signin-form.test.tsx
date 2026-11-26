@@ -6,7 +6,7 @@ import { SigninForm } from "./signin-form";
 
 const { signIn } = vi.hoisted(() => ({ signIn: vi.fn() }));
 
-vi.mock("@/stores/useAuthStore", () => ({
+vi.mock("@/stores/auth.store", () => ({
   useAuthStore: () => ({ signIn }),
 }));
 

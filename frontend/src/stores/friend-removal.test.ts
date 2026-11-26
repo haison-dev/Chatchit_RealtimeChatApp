@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { friendService } from "@/services/friendService";
-import { useFriendStore } from "./useFriendStore";
+import { friendService } from "@/services/friend.service";
+import { useFriendStore } from "./friend.store";
 
 const friend = (id: string) => ({ _id: id, username: id, displayName: id });
 

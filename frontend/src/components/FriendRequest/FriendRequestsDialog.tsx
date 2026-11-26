@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useFriendStore } from "@/stores/friend.store";
 import SentRequests from "./SentRequests";
 import ReceivedRequests from "./ReceivedRequest";
 

@@ -1,13 +1,13 @@
-import { useChatStore } from "@/stores/useChatStore";
-import type { Conversation, Participant } from "@/types/chat";
+import { useChatStore } from "@/stores/chat.store";
+import type { Conversation, Participant } from "@/interfaces/chat.interface";
 import { SidebarTrigger, useSidebar } from "../ui/sidebar";
 import ScreenNavButton from "../ScreenNavButton";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore } from "@/stores/auth.store";
 import { Separator } from "../ui/separator";
 import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
 import GroupChatAvatar from "./GroupChatAvatar";
-import { useSocketStore } from "@/stores/useSocketStore";
+import { useSocketStore } from "@/stores/socket.store";
 import GroupSettingsDialog from "./GroupSettingsDialog";
 import MessageSearchDialog from "./MessageSearchDialog";
 import { Link } from "react-router";

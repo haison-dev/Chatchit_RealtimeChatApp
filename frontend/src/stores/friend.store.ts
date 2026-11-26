@@ -1,5 +1,5 @@
-import { friendService } from "@/services/friendService";
-import type { FriendState } from "@/types/store";
+import { friendService } from "@/services/friend.service";
+import type { FriendState } from "@/interfaces/store.interface";
 import { create } from "zustand";
 
 export const useFriendStore = create<FriendState>((set) => ({

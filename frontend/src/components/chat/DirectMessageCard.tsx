@@ -1,19 +1,19 @@
 import { memo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/apiError";
+import { getApiErrorMessage } from "@/lib/api-error";
 import ConfirmDialog from "../ConfirmDialog";
 import { DropdownMenuItem } from "../ui/dropdown-menu";
-import type { Conversation } from "@/types/chat";
+import type { Conversation } from "@/interfaces/chat.interface";
 import ChatCard from "./ChatCard";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
 import { useSelectConversation } from "@/hooks/use-select-conversation";
 import { cn } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
 import UnreadCountBadge from "./UnreadCountBadge";
-import { useSocketStore } from "@/stores/useSocketStore";
+import { useSocketStore } from "@/stores/socket.store";
 
 const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const userId = useAuthStore((state) => state.user?._id);

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { chatService } from "@/services/chatService";
-import { useChatStore } from "./useChatStore";
-import type { Conversation } from "@/types/chat";
+import { chatService } from "@/services/chat.service";
+import { useChatStore } from "./chat.store";
+import type { Conversation } from "@/interfaces/chat.interface";
 
 describe("conversation deletion", () => {
   const conversation = (id: string) => ({ _id: id, type: "direct", participants: [] }) as unknown as Conversation;

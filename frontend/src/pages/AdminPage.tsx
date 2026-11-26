@@ -10,11 +10,11 @@ import UserSearchBox from "@/components/profile/UserSearchBox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePageMeta } from "@/hooks/use-page-meta";
-import { getApiErrorMessage } from "@/lib/apiError";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { CHAT_PATH } from "@/lib/routes";
-import { adminService } from "@/services/adminService";
-import { useAuthStore } from "@/stores/useAuthStore";
-import type { AdminStats, AdminUser, AdminUserPage } from "@/types/admin";
+import { adminService } from "@/services/admin.service";
+import { useAuthStore } from "@/stores/auth.store";
+import type { AdminStats, AdminUser, AdminUserPage } from "@/interfaces/admin.interface";
 
 const SEARCH_DELAY_MS = 300;
 

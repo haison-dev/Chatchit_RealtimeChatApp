@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import api from "@/lib/axios";
-import { chatService } from "./chatService";
+import { chatService } from "./chat.service";
 
 vi.mock("@/lib/axios", () => ({
   default: {

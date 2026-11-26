@@ -1,4 +1,4 @@
-import type { AdminSession } from "@/types/admin";
+import type { AdminSession } from "@/interfaces/admin.interface";
 
 const DEVICE_NAME: Record<AdminSession["deviceType"], string> = {
   mobile: "Điện thoại",

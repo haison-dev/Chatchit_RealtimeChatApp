@@ -3,9 +3,9 @@ import { Check, CheckCheck, Loader2, Pencil, RefreshCcw, SmilePlus, Trash2 } fro
 import { toast } from "sonner";
 import { cn, formatMessageTime } from "@/lib/utils";
 import { MESSAGE_MAX_LENGTH, sanitizeText } from "@/lib/sanitize";
-import type { Message } from "@/types/chat";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
+import type { Message } from "@/interfaces/chat.interface";
+import { useAuthStore } from "@/stores/auth.store";
+import { useChatStore } from "@/stores/chat.store";
 import UserAvatar from "./UserAvatar";
 import MessageImage from "./MessageImage";
 import CallLogMessage from "./CallLogMessage";

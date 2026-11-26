@@ -1,4 +1,4 @@
-import type { FriendRequest } from "@/types/user"
+import type { FriendRequest } from "@/interfaces/user.interface"
 import type { ReactNode } from "react";
 import UserAvatar from "../chat/UserAvatar";
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useAuthStore } from "./useAuthStore";
-import { useSocketStore } from "./useSocketStore";
+import { useAuthStore } from "./auth.store";
+import { useSocketStore } from "./socket.store";
 
 const { io } = vi.hoisted(() => ({
   io: vi.fn(() => ({

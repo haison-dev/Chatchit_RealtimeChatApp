@@ -1,4 +1,4 @@
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useFriendStore } from "@/stores/friend.store";
 import FriendRequestItem from "./FriendRequestItem";
 import { Button } from "../ui/button";
 import { toast } from "sonner";

@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore } from "@/stores/auth.store";
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router";
 import FullPageLoader from "../FullPageLoader";

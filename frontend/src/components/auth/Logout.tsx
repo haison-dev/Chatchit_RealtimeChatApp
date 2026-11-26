@@ -1,6 +1,6 @@
 import { Button } from '../ui/button'
 import { useNavigate } from 'react-router';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useAuthStore } from '@/stores/auth.store';
 import { LogOut } from 'lucide-react';
 
 const   Logout = () => {

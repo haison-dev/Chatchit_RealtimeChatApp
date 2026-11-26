@@ -1,4 +1,4 @@
-import type { CallLog } from "./call";
+import type { CallLog } from "./call.interface";
 
 export interface Participant {
   _id: string;

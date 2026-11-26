@@ -1,4 +1,4 @@
-import type { MutualFriends } from "@/types/user";
+import type { MutualFriends } from "@/interfaces/user.interface";
 import UserAvatar from "../chat/UserAvatar";
 
 /** Overlapping avatars plus "N bạn chung: A, B, C". Renders nothing when there are none. */

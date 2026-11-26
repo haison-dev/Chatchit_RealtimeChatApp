@@ -1,11 +1,11 @@
-import { useChatStore } from "@/stores/useChatStore";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useChatStore } from "@/stores/chat.store";
+import { useAuthStore } from "@/stores/auth.store";
 import ChatWelcomeScreen from "./ChatWelcomeScreen";
 import MessageItem from "./MessageItem";
 import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Loader2, MessageCircle } from "lucide-react";
-import type { Message } from "@/types/chat";
+import type { Message } from "@/interfaces/chat.interface";
 
 const EMPTY_MESSAGES: Message[] = [];
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useFriendStore } from "@/stores/friend.store";
 import CountBadge from "../CountBadge";
 import FriendRequestsDialog from "./FriendRequestsDialog";
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatNumber, shortDay } from "@/lib/admin";
 import { cn } from "@/lib/utils";
-import type { DailyCount } from "@/types/admin";
+import type { DailyCount } from "@/interfaces/admin.interface";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 

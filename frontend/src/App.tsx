@@ -4,9 +4,9 @@ import { lazy, Suspense, useEffect } from 'react';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import InstallAppBanner from './components/pwa/InstallAppBanner';
 import FullPageLoader from './components/FullPageLoader';
-import { useThemeStore } from './stores/useThemeStore';
-import { useAuthStore } from './stores/useAuthStore';
-import { useSocketStore } from './stores/useSocketStore';
+import { useThemeStore } from './stores/theme.store';
+import { useAuthStore } from './stores/auth.store';
+import { useSocketStore } from './stores/socket.store';
 
 // Route-level code splitting: the sign-in page no longer downloads the chat
 // bundle (sidebar, dialogs, socket UI), and the chat page skips the auth forms.

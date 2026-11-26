@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ImageOff } from "lucide-react";
-import { loadImage } from "@/lib/imageCache";
+import { loadImage } from "@/lib/image-cache";
 
 const MessageImage = ({ imageUrl, alt = "Ảnh trong tin nhắn" }: { imageUrl: string; alt?: string }) => {
   // Results are tagged with the URL they belong to, so a stale result is ignored

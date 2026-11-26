@@ -1,4 +1,4 @@
-import type { CallEndReason, CallFailureReason, CallKind, CallLog, CallRole } from "@/types/call";
+import type { CallEndReason, CallFailureReason, CallKind, CallLog, CallRole } from "@/interfaces/call.interface";
 
 /** STUN lets two browsers find each other. Calls across strict NATs need a TURN relay as well. */
 export const ICE_SERVERS: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];

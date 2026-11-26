@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
-import { authService } from "@/services/authService";
-import { userService } from "@/services/userService";
-import type { AuthState } from "@/types/store";
+import { authService } from "@/services/auth.service";
+import { userService } from "@/services/user.service";
+import type { AuthState } from "@/interfaces/store.interface";
 import { persist } from "zustand/middleware";
-import { useChatStore } from "./useChatStore";
-import { getApiErrorMessage } from "@/lib/apiError";
-import { clearImageCache } from "@/lib/imageCache";
+import { useChatStore } from "./chat.store";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { clearImageCache } from "@/lib/image-cache";
 
 export const useAuthStore = create<AuthState>()(
   persist(

@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useAuthStore } from "@/stores/useAuthStore";
-import type { UserProfile } from "@/types/user";
+import { useAuthStore } from "@/stores/auth.store";
+import type { UserProfile } from "@/interfaces/user.interface";
 import ProfileEditForm from "./ProfileEditForm";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));

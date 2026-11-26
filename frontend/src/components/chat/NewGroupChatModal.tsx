@@ -1,4 +1,4 @@
-import { useFriendStore } from "@/stores/useFriendStore";
+import { useFriendStore } from "@/stores/friend.store";
 import { useState } from "react";
 import {
   Dialog,
@@ -12,11 +12,11 @@ import { Button } from "../ui/button";
 import { UserPlus, Users } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import type { Friend } from "@/types/user";
+import type { Friend } from "@/interfaces/user.interface";
 import InviteSuggestionList from "../NewGroupChat/InviteSuggestionList";
 import SelectedUserList from "../NewGroupChat/SelectedUserList";
 import { toast } from "sonner";
-import { useChatStore } from "@/stores/useChatStore";
+import { useChatStore } from "@/stores/chat.store";
 import { cn } from "@/lib/utils";
 
 const NewGroupChatModal = ({ triggerClassName }: { triggerClassName?: string }) => {

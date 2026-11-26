@@ -8,9 +8,9 @@ import {
   getLocalStream,
   getMediaErrorMessage,
 } from "@/lib/call";
-import type { CallFailureReason, CallSignalKind } from "@/types/call";
-import type { CallState } from "@/types/store";
-import { useSocketStore } from "./useSocketStore";
+import type { CallFailureReason, CallSignalKind } from "@/interfaces/call.interface";
+import type { CallState } from "@/interfaces/store.interface";
+import { useSocketStore } from "./socket.store";
 
 type Ack = { ok: boolean; reason?: CallFailureReason; callId?: string };
 

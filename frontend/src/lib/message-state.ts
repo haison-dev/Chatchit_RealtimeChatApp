@@ -1,4 +1,4 @@
-import type { Message } from "@/types/chat";
+import type { Message } from "@/interfaces/chat.interface";
 
 export const mergeMessages = (...groups: Message[][]) => {
   const merged = new Map<string, Message>();

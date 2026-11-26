@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/apiError";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { useShowConversation } from "@/hooks/use-show-conversation";
 import { CHAT_PATH } from "@/lib/routes";
-import { userService } from "@/services/userService";
-import { useChatStore } from "@/stores/useChatStore";
-import { useFriendStore } from "@/stores/useFriendStore";
-import type { UserProfile } from "@/types/user";
+import { userService } from "@/services/user.service";
+import { useChatStore } from "@/stores/chat.store";
+import { useFriendStore } from "@/stores/friend.store";
+import type { UserProfile } from "@/interfaces/user.interface";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import type { Message } from "@/types/chat";
-import { chatService } from "@/services/chatService";
+import type { Message } from "@/interfaces/chat.interface";
+import { chatService } from "@/services/chat.service";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Input } from "../ui/input";

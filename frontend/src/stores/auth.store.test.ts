@@ -1,13 +1,13 @@
 import { AxiosError, type AxiosResponse } from "axios";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { authService } from "@/services/authService";
-import type { User } from "@/types/user";
-import { useAuthStore } from "./useAuthStore";
+import { authService } from "@/services/auth.service";
+import type { User } from "@/interfaces/user.interface";
+import { useAuthStore } from "./auth.store";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-vi.mock("@/services/authService", () => ({ authService: { refresh: vi.fn(), fetchMe: vi.fn() } }));
-vi.mock("@/services/userService", () => ({ userService: {} }));
+vi.mock("@/services/auth.service", () => ({ authService: { refresh: vi.fn(), fetchMe: vi.fn() } }));
+vi.mock("@/services/user.service", () => ({ userService: {} }));
 
 const USER = { _id: "u1", username: "an", displayName: "An" } as User;
 const EXPIRED = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại";

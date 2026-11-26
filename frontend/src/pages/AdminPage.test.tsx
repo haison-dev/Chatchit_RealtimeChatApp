@@ -2,12 +2,12 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { adminService } from "@/services/adminService";
-import { useAuthStore } from "@/stores/useAuthStore";
-import type { AdminSession, AdminUser } from "@/types/admin";
+import { adminService } from "@/services/admin.service";
+import { useAuthStore } from "@/stores/auth.store";
+import type { AdminSession, AdminUser } from "@/interfaces/admin.interface";
 import AdminPage from "./AdminPage";
 
-vi.mock("@/services/adminService", () => ({
+vi.mock("@/services/admin.service", () => ({
   adminService: {
     getStats: vi.fn(),
     listUsers: vi.fn(),

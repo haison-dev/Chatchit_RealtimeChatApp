@@ -12,7 +12,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { CHAT_PATH, CHAT_ROOM_PATTERN, chatRoomPath, conversationPath } from "@/lib/routes"
 import { cn } from "@/lib/utils"
-import { useChatStore } from "@/stores/useChatStore"
+import { useChatStore } from "@/stores/chat.store"
 
 const ProfilePage = lazy(() => import("./ProfilePage"))
 

@@ -1,9 +1,9 @@
 import { Link } from "react-router";
 import { ChevronRight, Download, Moon, ShieldCheck } from "lucide-react";
 import { ADMIN_PATH } from "@/lib/routes";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore } from "@/stores/auth.store";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
-import { useThemeStore } from "@/stores/useThemeStore";
+import { useThemeStore } from "@/stores/theme.store";
 import Logout from "../auth/Logout";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";

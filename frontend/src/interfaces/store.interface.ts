@@ -1,7 +1,7 @@
 import type { Socket } from "socket.io-client";
-import type { CallEndReason, CallKind, CallPeer, CallPhase, CallRole, CallSignal, IncomingCallPayload } from "./call";
-import type { Conversation, Message, TypingUser } from "./chat";
-import type { Friend, FriendRequest, UpdateProfileInput, User } from "./user";
+import type { CallEndReason, CallKind, CallPeer, CallPhase, CallRole, CallSignal, IncomingCallPayload } from "./call.interface";
+import type { Conversation, Message, TypingUser } from "./chat.interface";
+import type { Friend, FriendRequest, UpdateProfileInput, User } from "./user.interface";
 
 export interface AuthState {
   accessToken: string | null;
